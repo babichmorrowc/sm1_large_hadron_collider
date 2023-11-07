@@ -12,3 +12,7 @@ skim(higgs_data_orig) # quick data summary
 higgs_data <- higgs_data_orig %>% 
   # Replace all of the -999 values with NA
   mutate(across(where(is.numeric), ~na_if(.x, -999)))
+
+# Skim of data with NA values
+# complete_rate shows variables with lots of missing data
+skim(higgs_data)
