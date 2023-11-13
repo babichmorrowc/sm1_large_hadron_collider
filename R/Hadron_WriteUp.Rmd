@@ -1,0 +1,70 @@
+---
+title: "Maximising AMS via logistic regression - a love story"
+author: "Kieran Morris, Cecina Babich-Marrow and Daniella Montgomenry"
+date: "2023-11-07"
+output: html_document
+---
+
+```{r include = FALSE}
+library(tidyverse)
+library(skimr)
+library(ggplot2)
+```
+
+```{r}
+higgs_data_orig <- read_csv("./atlas-higgs-challenge-2014-v2.csv",show_col_types = F)
+higgs_data <- higgs_data_orig%>%mutate(across(where(is.numeric), ~na_if(.x, -999)))
+head(higgs_data)
+```
+
+# The Task
+
+Our data set consists of observations from the Large Hadron Collider at CERN over the year of 2012. It is ordered data of the form $\{(\mathbf{x}_i,y_i,w_i)\}_{i \in D}$ where $\mathbf{x} \in \mathbb{R}^{30}$; $y \in \{\mathbf{b},\mathbf{s}\}$ and $w \in [0,1]$ is a weight which measures the intensity of each data point.
+
+Each $\mathbf{x}_i$ is the collection of observables about each event and each $y_i$ is the categorization of the event as either 'Background' $(= \mathbf{b})$ and 'Signal' $=(\mathbf{s})$. We define $$
+\mathcal{S} = \{i: y_i = \mathbf{s}\} \text{ and } \mathcal{B} = \{i: y_i  =\mathbf{b}\}
+$$ with $n_s = \mid \mathcal{S} \mid$ and $n_b = \mid \mathcal{B} \mid$ respectively. The weight variable is not to be used to train the classifier $f$ in any way, it is only to compute the AMS, which is our measure of the accuracy of $f$. Speaking of $f$, we define $\hat{f} = \{i: f(\mathbf{x}_i) = \mathbf{s}\}$, i.e the points labelled as signals by $f$ and using this we define $$
+s = \sum_{i \in \mathcal{S}\cap \hat{f}}w_i \text{ and }  b = \sum_{i \in \mathcal{B}\cap \hat{f}}w_i
+$$
+
+i.e $s$ and $b$ are the weighted $\textit{true positives}$ and $\textit{false positives}$ respectively. Finally we define the AMS function is defined as follows: $$
+\text{AMS}(f) = \sqrt{2\left(s+b+b_{reg}\ln \left (1+ \frac{s}{b+b_{reg}} \right) -s  \right)}
+$$
+
+Where $b$ and $s$ are as above. Notice that this is computed over the entire data set $D$, so if we wish to compute this over some training or test set we must re-normalize the weights.
+
+Our task is to find some classifier $f$ which maximizes the AMS.
+
+# Preliminary Observations
+
+## Missing Data
+
+By convention the data was provided to us with the value `-999` wherever data was missing. This is usually to emphasize the importance of the error as an extremal value, however different contexts require different treatments.
+
+### Observations
+
+The first observation is that there is a lot of missing data: in $11$ of our columns we have proportional completeness in $\{0.848,0.291,0.600\}$ - whereas the other $19$ are $1$. Additionally the locations of the missing data match up for all of our columns with equivalent completeness - i.e `DER_deltaeta_jet_jet$complete_rate = DER_deltaeta_jet_jet$complete_rate = 0.291` and `DER_deltaeta_jet_jet[i] = N/A` if and only if `DER_mass_jet_jet[i] = N/A`. CITATION NEEDED
+
+```{r}
+
+```
+
+This leads us to believe that the missing data points are part of a systematic issue with the measurements, however this doesn't rule out if the error is dependent on the value of $y_i$, i.e if errors only occurred when $y_i = \mathbf{s}$ then clearly an error is clearly an indictator we cannot afford to lose.
+
+### Impact of the Errors
+
+Let's formalize this, via simple computation we can approximate the distributions for $y_i \sim \text{Bernouli}()$, $\text{NA} \sim \text{Bernouli}()$ and $(y_i,\text{NA}) \sim$
+
+Below we estimate the distribution of $p(\text{NA} \mid \mathbf{s})$ and $p(\text{NA} \mid \mathbf{b})$ via `geom_histogram()` from `ggplot2`.
+
+```{r}
+Group = c(1:818238)
+SplitData = data.frame(higgs_data$DER_lep_eta_centrality,Group)
+pl <- ggplot(data = higgs_data, aes(x= SplitData)) +geom_histogram(binwidth = 0.01)
+
+pl
+```
+
+### Simulating Missing data
+
+# Running a PCA
