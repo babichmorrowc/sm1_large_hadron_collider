@@ -9,12 +9,16 @@ output: html_document
 library(tidyverse)
 library(skimr)
 library(ggplot2)
+library(purrr)
+library(ggpubr)
+library(DT)
 ```
 
 ```{r}
 higgs_data_orig <- read_csv("./atlas-higgs-challenge-2014-v2.csv",show_col_types = F)
 higgs_data <- higgs_data_orig%>%mutate(across(where(is.numeric), ~na_if(.x, -999)))
-head(higgs_data)
+datatable(head(higgs_data))
+
 ```
 
 # The Task
@@ -31,7 +35,7 @@ i.e $s$ and $b$ are the weighted $\textit{true positives}$ and $\textit{false po
 \text{AMS}(f) = \sqrt{2\left(s+b+b_{reg}\ln \left (1+ \frac{s}{b+b_{reg}} \right) -s  \right)}
 $$
 
-Where $b$ and $s$ are as above. Notice that this is computed over the entire data set $D$, so if we wish to compute this over some training or test set we must re-normalize the weights.
+Where $b$ and $s$ are as above. Notice that this is computed over a data set $D$, so if we wish to compute this over some training or test set we must re-normalize the weights.
 
 Our task is to find some classifier $f$ which maximizes the AMS.
 
@@ -39,32 +43,59 @@ Our task is to find some classifier $f$ which maximizes the AMS.
 
 ## Missing Data
 
-By convention the data was provided to us with the value `-999` wherever data was missing. This is usually to emphasize the importance of the error as an extremal value, however different contexts require different treatments.
+By convention the data was provided with the value `-999` to denote missing data. This is usually to emphasize the importance of the missing data as an extreme value, however in some contexts the extremal values should be ignored, such as when using Least Squares Classification or if there is a systematic reason why there is missing data in certain locations.
 
 ### Observations
 
-The first observation is that there is a lot of missing data: in $11$ of our columns we have proportional completeness in $\{0.848,0.291,0.600\}$ - whereas the other $19$ are $1$. Additionally the locations of the missing data match up for all of our columns with equivalent completeness - i.e `DER_deltaeta_jet_jet$complete_rate = DER_deltaeta_jet_jet$complete_rate = 0.291` and `DER_deltaeta_jet_jet[i] = N/A` if and only if `DER_mass_jet_jet[i] = N/A`. CITATION NEEDED
+There is a lot of missing data: in $11$ of our columns we have proportional completeness in $\{0.848,0.291,0.600\}$ - whereas the other $19$ are $1$ exactly. Additionally the locations of the missing data match up for all of our columns with equivalent completeness - i.e `DER_deltaeta_jet_jet$complete_rate = DER_mass_jet_jet$complete_rate = 0.291` and `DER_deltaeta_jet_jet[i] = N/A` if and only if `DER_mass_jet_jet[i] = N/A`. CITATION NEEDED
 
 ```{r}
 
 ```
 
-This leads us to believe that the missing data points are part of a systematic issue with the measurements, however this doesn't rule out if the error is dependent on the value of $y_i$, i.e if errors only occurred when $y_i = \mathbf{s}$ then clearly an error is clearly an indictator we cannot afford to lose.
+This leads us to believe that the missing data points are part of the measurement process, possibly where the missing data is dependent on the value of $y_i \in \{b,s\}$, i.e if missing data occurred disproportionately when $y_i = \mathbf{b}$ then we would conclude firstly that the detectors picked up a negligible signal in the Background case, and more importantly that missing data can help us classify for $\mathbf{b}$.
 
-### Impact of the Errors
+### Impact of the Missing Data
 
-Let's formalize this, via simple computation we can approximate the distributions for $y_i \sim \text{Bernouli}()$, $\text{NA} \sim \text{Bernouli}()$ and $(y_i,\text{NA}) \sim$
+If we determine that the distribution of missing data across $\mathbf{s}$ and $\mathbf{b}$ is uniform then we can use RBF regression - on each column - to interpolate missing data points. However if the missing data is skewed we will incorporate the extreme values into our classification.
 
-Below we estimate the distribution of $p(\text{NA} \mid \mathbf{s})$ and $p(\text{NA} \mid \mathbf{b})$ via `geom_histogram()` from `ggplot2`.
+Below we compute the percentage of `NA` data observed in Background and Signal data (relative to the amount of Background/Signal respectively) for our 11 incomplete columns. If this missing data is distributed uniformly across Background and Signal then the percentages should be very close.
 
 ```{r}
-Group = c(1:818238)
-SplitData = data.frame(higgs_data$DER_lep_eta_centrality,Group)
-pl <- ggplot(data = higgs_data, aes(x= SplitData)) +geom_histogram(binwidth = 0.01)
+summary_OfHiggs <- skim(higgs_data)#retrieve important variables from each column
+num_DataPoints <- length(higgs_data$Label) #compute number of data points
+num_Background <- length(Filter(function(x){if (x =="b"){return(T)}else{return(F)}},higgs_data$Label))#compute number of background
+num_Signal <- num_DataPoints - num_Background#number of signals
 
-pl
+variables_WithError <- filter(summary_OfHiggs, complete_rate != 1)#Finding the columns which contain undefined elements
+
+Background <- filter(higgs_data, Label == "b")[c(variables_WithError$skim_variable)]#filtering rows by background
+Signal <- filter(higgs_data, Label =="s")[c(variables_WithError$skim_variable)]#filter rows by signal
+
+missing_GivenB <- apply(Background,2,function(x){return(round(100*sum(is.na(x))/length(x),digits = 4))})#calculate percentage missing data for background and signal
+missing_GivenS <- apply(Signal,2,function(x){return(round(100*sum(is.na(x))/length(x),digits = 4))})
+
+df <- datatable(data.frame(missing_GivenS,missing_GivenB,missing_GivenB-missing_GivenS),col = c("Signal","Background","Difference"),caption = "% of Missing Background and Signal Data",options = list(pageLength = 11))
+
+df
+
+
+
 ```
 
-### Simulating Missing data
+Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. Considering the size of our data set ($\approx 8\times 10^6$), this is statistically significant and we cannot disregard this as a result of random fluctuation [CITATION NEEDED], meaning that we can use the missing data in order to help us classify $\mathbf{s}$ and $\mathbf{b}$. \# PDF of Each variable To gain an understanding of how each variable varies for each class $\mathbf{b}$ and $\mathbf{s}$ we plot the histogram of the data for each column.
+
+
+```{r}
+
+plots <- function(Parameter){
+  pl <- ggplot(higgs_data, aes(x= Parameter, fill = Label)) + geom_density()
+  }
+plot_list <- lapply(variables_WithError$skim_variable,plots)
+View(plot_list)
+#ggarrange(plotlist = plot_list,ncol = 2, nrow = 2,combine.legend = T)
+cowplot::plot_grid(plotlist = plot_list, nrow = 2,ncol =  1)
+
+```
 
 # Running a PCA
