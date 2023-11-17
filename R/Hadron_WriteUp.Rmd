@@ -85,17 +85,26 @@ df
 
 Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. Considering the size of our data set ($\approx 8\times 10^6$), this is statistically significant and we cannot disregard this as a result of random fluctuation [CITATION NEEDED], meaning that we can use the missing data in order to help us classify $\mathbf{s}$ and $\mathbf{b}$. \# PDF of Each variable To gain an understanding of how each variable varies for each class $\mathbf{b}$ and $\mathbf{s}$ we plot the histogram of the data for each column.
 
-
 ```{r}
 
-plots <- function(Parameter){
-  pl <- ggplot(higgs_data, aes(x= Parameter, fill = Label)) + geom_density()
-  }
-plot_list <- lapply(variables_WithError$skim_variable,plots)
-View(plot_list)
-#ggarrange(plotlist = plot_list,ncol = 2, nrow = 2,combine.legend = T)
-cowplot::plot_grid(plotlist = plot_list, nrow = 2,ncol =  1)
+#plots <- function(Parameter){
+ # pl <- ggplot(higgs_data, aes(x= Parameter, fill = Label)) + geom_density()
+  #}
+#plot_list <- lapply(variables_WithError$skim_variable,plots)
 
+#ggarrange(plotlist = plot_list,ncol = 2, nrow = 2,combine.legend = T)
+#cowplot::plot_grid(plotlist = plot_list, nrow = 2,ncol =  1)
+
+```
+
+```{r}
+pl <- ggplot(higgs_data, aes(x= DER_mass_MMC, fill = Label)) + geom_density()
+pl
+
+for (col in variables_WithError$skim_variable){
+  pl <- ggplot(higgs_data, aes(x= col, fill = Label)) + geom_density()
+  print(pl)
+  }
 ```
 
 # Running a PCA
