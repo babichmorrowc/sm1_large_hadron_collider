@@ -1,6 +1,6 @@
 ---
 title: "Maximising AMS via logistic regression - a love story"
-author: "Kieran Morris, Cecina Babich-Marrow and Daniella Montgomenry"
+author: "Kieran Morris, Cecina Babich Morrow and Daniella Montgomenry"
 date: "2023-11-07"
 output: html_document
 ---
@@ -15,7 +15,7 @@ library(DT)
 ```
 
 ```{r}
-higgs_data_orig <- read_csv("./atlas-higgs-challenge-2014-v2.csv",show_col_types = F)
+higgs_data_orig <- read_csv("../data/atlas-higgs-challenge-2014-v2.csv",show_col_types = F)
 higgs_data <- higgs_data_orig%>%mutate(across(where(is.numeric), ~na_if(.x, -999)))
 datatable(head(higgs_data))
 
@@ -87,13 +87,16 @@ Notice that `Signal` consistently has $13-18 \%$ less missing data than `Backgro
 
 ```{r}
 
-#plots <- function(Parameter){
- # pl <- ggplot(higgs_data, aes(x= Parameter, fill = Label)) + geom_density()
-  #}
-#plot_list <- lapply(variables_WithError$skim_variable,plots)
+plots <- function(Parameter){
+  pl <- ggplot(higgs_data, aes(x= get(Parameter), fill = Label)) +
+    geom_density(alpha = 0.5) +
+    labs(x = Parameter)
+  return(pl)
+}
+plot_list <- lapply(variables_WithError$skim_variable,plots)
 
-#ggarrange(plotlist = plot_list,ncol = 2, nrow = 2,combine.legend = T)
-#cowplot::plot_grid(plotlist = plot_list, nrow = 2,ncol =  1)
+ggarrange(plotlist = plot_list,ncol = 2, nrow = 2,combine.legend = T)
+# cowplot::plot_grid(plotlist = plot_list, nrow = 2,ncol =  1)
 
 ```
 
