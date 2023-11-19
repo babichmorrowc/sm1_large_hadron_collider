@@ -1,9 +1,10 @@
 ---
-title: "Maximising AMS via logistic regression - a love story"
-author: "Kieran Morris, Cecina Babich Morrow and Daniella Montgomenry"
+title: "Maximising AMS by classifying Higgs Boson Data - a love story"
+author: "Kieran Morris, Cecina Babich Morrow and Daniella Montgomery"
 date: "2023-11-07"
 output: html_document
 ---
+
 
 ```{r include = FALSE}
 library(tidyverse)
@@ -26,11 +27,15 @@ Our data set consists of observations from the Large Hadron Collider at CERN ove
 
 Each $\mathbf{x}_i$ is the collection of observables about each event and each $y_i$ is the categorization of the event as either 'Background' $(= \mathbf{b})$ and 'Signal' $=(\mathbf{s})$. We define $$
 \mathcal{S} = \{i: y_i = \mathbf{s}\} \text{ and } \mathcal{B} = \{i: y_i  =\mathbf{b}\}
-$$ with $n_s = \mid \mathcal{S} \mid$ and $n_b = \mid \mathcal{B} \mid$ respectively. The weight variable is not to be used to train the classifier $f$ in any way, it is only to compute the AMS, which is our measure of the accuracy of our classifier $f$. Speaking of $f$, we define $\hat{f} = \{i: f(\mathbf{x}_i) = \mathbf{s}\}$, i.e the points labelled as signals by $f$ and using this we define $$
+$$ with $n_s = \mid \mathcal{S} \mid$ and $n_b = \mid \mathcal{B} \mid$ respectively. The weight variable is not to be used to train the classifier $f$ in any way, it is only to compute the AMS, which is our measure of the accuracy of our classifier $f$. Speaking of $f$, we define $\hat{f} = \{i: f(\mathbf{x}_i) = \mathbf{s}\}$, i.e the points labelled as signals by $f$ and using this we define
+
+$$
 s = \sum_{i \in \mathcal{S}\cap \hat{f}}w_i \text{ and }  b = \sum_{i \in \mathcal{B}\cap \hat{f}}w_i
 $$
 
-i.e $s$ and $b$ are the weighted $\textit{true positives}$ and $\textit{false positives}$ respectively. Finally we define the AMS function is defined as follows: $$
+i.e $s$ and $b$ are the weighted $\textit{true positives}$ and $\textit{false positives}$ respectively. Finally we define the AMS function is defined as follows:
+
+$$
 \text{AMS}(f) = \sqrt{2\left(s+b+b_{reg}\ln \left (1+ \frac{s}{b+b_{reg}} \right) -s  \right)}
 $$
 
@@ -43,6 +48,14 @@ Our task is to find some classifier $f$ which maximizes the AMS.
 ## Types of Data
 
 We have a few unique types of data to consider: we have the columns `KaggleSet` and `KaggleWeight` which can be ignored as they denote which data points were in the provided Kaggle challenge and their relative weights; our classification variable `Label` which takes values in $\{b,s\}$; the Weight, which we use to compute the AMS, and finally `PRI_jet_num` which denotes the amount of jets from each event and takes values in $\{0,1,2,3\}$ . All other variables are either direct or indirect measurements made by the LHC.
+
+## Co-Linearity of Data
+
+Multiple of our variables are dependent on one or another, possibly to assist in computation at CERN. However since we are classifying we want to remove as many dimensions as possible. We have the following co-linearities:
+
+-   `PRI_jet_all_pt = PRI_leading_jet_phi + PRI_subleading_pt`
+
+-   Understanding these co-linearities allows us to reject some subset of them to lower the dimension of our data, however as a choice needs to be made as to which to remove. For example we could only choose to keep `PRI_jet_all_pt` and hope that the sum contains enough information from the other two, or we could choose to only remove `PRI_jet_all_pt` and guarantee no information loss, but at the cost of one more dimension.
 
 ## Missing Data
 
@@ -61,7 +74,9 @@ Notice that every column besides `DER_mass_MMC` is associated to jets, and in th
 
 -   1 jet: only `PRI_leading_pt`,`PRI_leading_eta` and `PRI_leading_phi` have data.
 
--   2 or more jets: All jet variables have data. The above result can be found statistically or in the handbook for the variables provided with the Kaggle challenge. Unfortunately `DER_mass_MMC` does not have such an explanation and may be a result of some event during measurement. However it is still assigned the same `-999` value as the other missing data.
+-   2 or more jets: All jet variables have data.
+
+The above result can be found statistically or in the handbook for the variables provided with the Kaggle challenge. Unfortunately `DER_mass_MMC` does not have such an explanation and may be a result of some event during measurement. However it is still assigned the same `-999` value as the other missing data.
 
 ### Impact of the Missing Data
 
@@ -88,42 +103,67 @@ df
 
 ```
 
-Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. This means that in both the `DER_mass_MMC` and jet-variables cases, the amount of missing data is indicative of a classification. In particular we cannot use regression to simulate missing data as we would lose valuable classifying information.
+Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. This means that in both the `DER_mass_MMC` and jet-variables cases, the amount of missing data is indicative of a classification. In particular we cannot use regression to simulate missing data as we would lose valuable classifying information. Because of this, we decide to keep the `-999` values when constructing our classifier.
 
-### Modifying the missing data
+## Distribution of Each Variable
 
-## PDF of Each variable
+To get an understanding of each variable given their classification as either $b$ or $s$ we plot their densities below.
 
-To gain an understanding of how each variable varies for each class $\mathbf{b}$ and $\mathbf{s}$ we plot the pdf of the data for each column.
-
-```{r}
+```{r setup, warning=FALSE}
 plots <- function(Parameter){
   pl <- ggplot(higgs_data, aes(x= get(Parameter), fill = Label)) +
     geom_density(alpha = 0.5) +
     labs(x = Parameter)
   return(pl)
 }
-plot_list <- lapply(colnames(higgs_data)[2:29],plots)
 
-ggarrange(plotlist = plot_list,ncol = 4, nrow = 3,combine.legend = T)
+cols_ToPlot <- c(colnames(higgs_data)[2:23],colnames(higgs_data)[25:31]) #remove jet_num
+plot_list <- lapply(cols_ToPlot,plots)
 
-
+ggarrange(plotlist = plot_list,ncol = 2, nrow = 2, align = "v", combine.legend = TRUE)
 ```
+
+Some observations:
+
+-   We can immediately see that `PRI_tau_phi`,`PRI_lep_phi`, `PRI_met_phi` and `PRI_jet_leading_phi` are uniformly distributed and that there is very little variation between the classifications. This leads us to consider rejecting them from our classification, reducing the dimension by 4.
+
+-   We can see the co-linearity of `PRI_jet_all_pt`,`PRI_leading_jet_phi` and `PRI_subleading_pt`, as previously stated we will reject some subset of these for our classification.
+
+-   We can see extreme variation in the peaks in multiple other variables, indicating that that may be principle components for our analysis.
 
 # Fisher Discriminant Analysis
 
-Recall that Fisher Discriminant Analysis gives us a vector which we can project our data onto in order to separate our set as much as possible.
+In order to get an idea how separated our data is we perform FDA, however considering our previous study of the distribution of each variable we will perform it under different conditions
 
 ```{r}
-source("R/clean_data.R")
-source("R/fda.R")
-ldahist(data = fda_pred$x[,1], g = fda_training$Label) #FDA when we include the the columns with #missing data
-fda_nomissing <- lda(Label ~ ., fda_training_nomissing) #FDA when we exclude the columns with missing data 
+#source("R/clean_data.R")
+#source("R/fda.R")
 ```
+
+## Keeping Angle Variables
+
+### Including missing data
+
+```{r}
+#ldahist(data = fda_pred$x[,1], g = fda_training$Label) #FDA when we include the the columns with #missing data
+```
+
+## Excluding missing data
+
+```{r}
+#fda_nomissing <- lda(Label ~ ., fda_training_nomissing) #FDA when we exclude the columns with missing data 
+```
+
+## Rejecting angle variables
+
+Notice that in both cases our data is not separated well at all, and there is not much difference between including or excluding missing data points. 
+
+### Keeping Co-linearities
+
+This is where we keep colinearites
+
+### Rejecting Co-linearities
 
 # Running a PCA
 
-
 # Logistic Regression
-
-#
