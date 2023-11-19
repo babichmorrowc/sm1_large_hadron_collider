@@ -5,7 +5,6 @@ date: "2023-11-07"
 output: html_document
 ---
 
-
 ```{r include = FALSE}
 library(tidyverse)
 library(skimr)
@@ -47,15 +46,27 @@ Our task is to find some classifier $f$ which maximizes the AMS.
 
 ## Types of Data
 
-We have a few unique types of data to consider: we have the columns `KaggleSet` and `KaggleWeight` which can be ignored as they denote which data points were in the provided Kaggle challenge and their relative weights; our classification variable `Label` which takes values in $\{b,s\}$; the Weight, which we use to compute the AMS, and finally `PRI_jet_num` which denotes the amount of jets from each event and takes values in $\{0,1,2,3\}$ . All other variables are either direct or indirect measurements made by the LHC.
+We have a few unique types of data to consider:
 
-## Co-Linearity of Data
+-   Variables `KaggleSet` and `KaggleWeight` can be ignored as they denote which data points were in the provided Kaggle challenge and their relative weights
 
-Multiple of our variables are dependent on one or another, possibly to assist in computation at CERN. However since we are classifying we want to remove as many dimensions as possible. We have the following co-linearities:
+-   The discrete classification variable `Label` which takes values in $\{b,s\}$
+
+-   The continuous variable `Weight`, which we only use to compute the AMS
+
+-   The discrete variable `PRI_jet_num` which denotes the amount of jets from each event and takes values in $\{0,1,2,3\}$
+
+-   All other variables are either direct measurements - or computed from direct measurements from the LHC and take continuous values.
+
+## Co-Dependency of Data
+
+Multiple of our variables are dependent on one or another. Since we are classifying, we want to remove as many dimensions as possible. We have the following co-dependencies:
 
 -   `PRI_jet_all_pt = PRI_leading_jet_phi + PRI_subleading_pt`
+-   `DER_pt_ratio_lep_tau = PRI_lep_pt/PRI_tau_pt`
+-   Jet related variables depend on `PRI_jet_num` (see next section for more)
 
--   Understanding these co-linearities allows us to reject some subset of them to lower the dimension of our data, however as a choice needs to be made as to which to remove. For example we could only choose to keep `PRI_jet_all_pt` and hope that the sum contains enough information from the other two, or we could choose to only remove `PRI_jet_all_pt` and guarantee no information loss, but at the cost of one more dimension.
+This allows us to reduce the dimension of our data by removing some redundant subset of our variables. However there will be a trade off between dimension reduction and detail. If we are liberal we can remove 2+2+10 = 14 dimensions, however this would probably limit the classifier.
 
 ## Missing Data
 
@@ -63,12 +74,13 @@ Multiple of our variables are dependent on one or another, possibly to assist in
 
 Below are the variables which contain undefined values. By convention it was provided to use with values `-999` which were all out of range for the observations, however we have converted such values to `NA` to prevent `-999` values from skewing preliminary statistics.
 
-```{r}
+```{r,echo = FALSE}
 variables_WithError <- filter(yank(summary_OfHiggs,"numeric"), complete_rate != 1)
-variables_WithError[1:3]
+ve <- datatable(variables_WithError[1:3],options = list(pageLength = 11))
+ve
 ```
 
-Notice that every column besides `DER_mass_MMC` is associated to jets, and in those, we only have two values for `completion_rate`. In fact these correspond to different values of `PRI_jet_num`:
+Notice that every column besides `DER_mass_MMC` is associated to jets, and in those, we only have two values for `completion_rate`. In fact these are a result of different values of `PRI_jet_num`:
 
 -   0 jets: All jet variables were missing data.
 
@@ -84,7 +96,7 @@ Despite understanding the cause of (most of) our missing data, we still don't kn
 
 Below we compute the percentage of `NA` data observed in Background and Signal data (relative to the amount of Background/Signal respectively) for our 11 incomplete columns. If this missing data is distributed uniformly across Background and Signal then the percentages should be very close.
 
-```{r}
+```{r, echo = FALSE}
 num_DataPoints <- length(higgs_data$Label) #compute number of data points
 num_Background <- length(Filter(function(x){if (x =="b"){return(T)}else{return(F)}},higgs_data$Label))#compute number of background
 num_Signal <- num_DataPoints - num_Background#number of signals
@@ -109,7 +121,7 @@ Notice that `Signal` consistently has $13-18 \%$ less missing data than `Backgro
 
 To get an understanding of each variable given their classification as either $b$ or $s$ we plot their densities below.
 
-```{r setup, warning=FALSE}
+```{r setup, warning=FALSE,,message = FALSE, echo = FALSE,fig.align="center", echo = FALSE,fig.width = 14}
 plots <- function(Parameter){
   pl <- ggplot(higgs_data, aes(x= get(Parameter), fill = Label)) +
     geom_density(alpha = 0.5) +
@@ -119,17 +131,14 @@ plots <- function(Parameter){
 
 cols_ToPlot <- c(colnames(higgs_data)[2:23],colnames(higgs_data)[25:31]) #remove jet_num
 plot_list <- lapply(cols_ToPlot,plots)
-
 ggarrange(plotlist = plot_list,ncol = 2, nrow = 2, align = "v", combine.legend = TRUE)
 ```
 
 Some observations:
 
--   We can immediately see that `PRI_tau_phi`,`PRI_lep_phi`, `PRI_met_phi` and `PRI_jet_leading_phi` are uniformly distributed and that there is very little variation between the classifications. This leads us to consider rejecting them from our classification, reducing the dimension by 4.
+-   We see that `PRI_tau_phi`,`PRI_lep_phi`, `PRI_met_phi` and `PRI_jet_leading_phi` are uniformly distributed and that there is very little variation between the classifications. This leads us to consider rejecting them from our classification, reducing the dimension by 4.
 
 -   We can see the co-linearity of `PRI_jet_all_pt`,`PRI_leading_jet_phi` and `PRI_subleading_pt`, as previously stated we will reject some subset of these for our classification.
-
--   We can see extreme variation in the peaks in multiple other variables, indicating that that may be principle components for our analysis.
 
 # Fisher Discriminant Analysis
 
@@ -156,7 +165,7 @@ In order to get an idea how separated our data is we perform FDA, however consid
 
 ## Rejecting angle variables
 
-Notice that in both cases our data is not separated well at all, and there is not much difference between including or excluding missing data points. 
+Notice that in both cases our data is not separated well at all, and there is not much difference between including or excluding missing data points.
 
 ### Keeping Co-linearities
 
