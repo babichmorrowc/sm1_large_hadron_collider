@@ -17,8 +17,7 @@ library(DT)
 ```{r}
 higgs_data_orig <- read_csv("../data/atlas-higgs-challenge-2014-v2.csv",show_col_types = F)
 higgs_data <- higgs_data_orig%>%mutate(across(where(is.numeric), ~na_if(.x, -999)))
-datatable(head(higgs_data))
-
+summary_OfHiggs <- skim(higgs_data)
 ```
 
 # The Task
@@ -27,7 +26,7 @@ Our data set consists of observations from the Large Hadron Collider at CERN ove
 
 Each $\mathbf{x}_i$ is the collection of observables about each event and each $y_i$ is the categorization of the event as either 'Background' $(= \mathbf{b})$ and 'Signal' $=(\mathbf{s})$. We define $$
 \mathcal{S} = \{i: y_i = \mathbf{s}\} \text{ and } \mathcal{B} = \{i: y_i  =\mathbf{b}\}
-$$ with $n_s = \mid \mathcal{S} \mid$ and $n_b = \mid \mathcal{B} \mid$ respectively. The weight variable is not to be used to train the classifier $f$ in any way, it is only to compute the AMS, which is our measure of the accuracy of $f$. Speaking of $f$, we define $\hat{f} = \{i: f(\mathbf{x}_i) = \mathbf{s}\}$, i.e the points labelled as signals by $f$ and using this we define $$
+$$ with $n_s = \mid \mathcal{S} \mid$ and $n_b = \mid \mathcal{B} \mid$ respectively. The weight variable is not to be used to train the classifier $f$ in any way, it is only to compute the AMS, which is our measure of the accuracy of our classifier $f$. Speaking of $f$, we define $\hat{f} = \{i: f(\mathbf{x}_i) = \mathbf{s}\}$, i.e the points labelled as signals by $f$ and using this we define $$
 s = \sum_{i \in \mathcal{S}\cap \hat{f}}w_i \text{ and }  b = \sum_{i \in \mathcal{B}\cap \hat{f}}w_i
 $$
 
@@ -35,34 +34,42 @@ i.e $s$ and $b$ are the weighted $\textit{true positives}$ and $\textit{false po
 \text{AMS}(f) = \sqrt{2\left(s+b+b_{reg}\ln \left (1+ \frac{s}{b+b_{reg}} \right) -s  \right)}
 $$
 
-Where $b$ and $s$ are as above. Notice that this is computed over a data set $D$, so if we wish to compute this over some training or test set we must re-normalize the weights.
+Where $b$ and $s$ are as above and $b_{reg}$ is a normalizing constant. Notice that this is computed over a data set $D$, so if we wish to compute this over some training or test set we must re-normalize the weights.
 
 Our task is to find some classifier $f$ which maximizes the AMS.
 
-# Preliminary Observations
+# Preliminary Observations and Statistics
+
+## Types of Data
+
+We have a few unique types of data to consider: we have the columns `KaggleSet` and `KaggleWeight` which can be ignored as they denote which data points were in the provided Kaggle challenge and their relative weights; our classification variable `Label` which takes values in $\{b,s\}$; the Weight, which we use to compute the AMS, and finally `PRI_jet_num` which denotes the amount of jets from each event and takes values in $\{0,1,2,3\}$ . All other variables are either direct or indirect measurements made by the LHC.
 
 ## Missing Data
 
-By convention the data was provided with the value `-999` to denote missing data. This is usually to emphasize the importance of the missing data as an extreme value, however in some contexts the extremal values should be ignored, such as when using Least Squares Classification or if there is a systematic reason why there is missing data in certain locations.
+### What is missing and why?
 
-### Observations
-
-There is a lot of missing data: in $11$ of our columns we have proportional completeness in $\{0.848,0.291,0.600\}$ - whereas the other $19$ are $1$ exactly. Additionally the locations of the missing data match up for all of our columns with equivalent completeness - i.e `DER_deltaeta_jet_jet$complete_rate = DER_mass_jet_jet$complete_rate = 0.291` and `DER_deltaeta_jet_jet[i] = N/A` if and only if `DER_mass_jet_jet[i] = N/A`. CITATION NEEDED
+Below are the variables which contain undefined values. By convention it was provided to use with values `-999` which were all out of range for the observations, however we have converted such values to `NA` to prevent `-999` values from skewing preliminary statistics.
 
 ```{r}
-
+variables_WithError <- filter(yank(summary_OfHiggs,"numeric"), complete_rate != 1)
+variables_WithError[1:3]
 ```
 
-This leads us to believe that the missing data points are part of the measurement process, possibly where the missing data is dependent on the value of $y_i \in \{b,s\}$, i.e if missing data occurred disproportionately when $y_i = \mathbf{b}$ then we would conclude firstly that the detectors picked up a negligible signal in the Background case, and more importantly that missing data can help us classify for $\mathbf{b}$.
+Notice that every column besides `DER_mass_MMC` is associated to jets, and in those, we only have two values for `completion_rate`. In fact these correspond to different values of `PRI_jet_num`:
+
+-   0 jets: All jet variables were missing data.
+
+-   1 jet: only `PRI_leading_pt`,`PRI_leading_eta` and `PRI_leading_phi` have data.
+
+-   2 or more jets: All jet variables have data. The above result can be found statistically or in the handbook for the variables provided with the Kaggle challenge. Unfortunately `DER_mass_MMC` does not have such an explanation and may be a result of some event during measurement. However it is still assigned the same `-999` value as the other missing data.
 
 ### Impact of the Missing Data
 
-If we determine that the distribution of missing data across $\mathbf{s}$ and $\mathbf{b}$ is uniform then we can use RBF regression - on each column - to interpolate missing data points. However if the missing data is skewed we will incorporate the extreme values into our classification.
+Despite understanding the cause of (most of) our missing data, we still don't know the impact, the following section is dedicated to understanding the correlation between the missing data from each variable and its classification. Take `DER_mass_MMC` for example, if we find that the missing data is distributed uniformly across $y_i \in \{b,s\}$ then the appearance of `NA` has no impact on classification. This would allow us to run a regression algorithm to let us interpolate missing values and possibly improve classification. However if it is disproportionately skewed towards $b$ signals then the missing data will assist us in classification.
 
 Below we compute the percentage of `NA` data observed in Background and Signal data (relative to the amount of Background/Signal respectively) for our 11 incomplete columns. If this missing data is distributed uniformly across Background and Signal then the percentages should be very close.
 
 ```{r}
-summary_OfHiggs <- skim(higgs_data)#retrieve important variables from each column
 num_DataPoints <- length(higgs_data$Label) #compute number of data points
 num_Background <- length(Filter(function(x){if (x =="b"){return(T)}else{return(F)}},higgs_data$Label))#compute number of background
 num_Signal <- num_DataPoints - num_Background#number of signals
@@ -79,35 +86,44 @@ df <- datatable(data.frame(missing_GivenS,missing_GivenB,missing_GivenB-missing_
 
 df
 
-
-
 ```
 
-Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. Considering the size of our data set ($\approx 8\times 10^6$), this is statistically significant and we cannot disregard this as a result of random fluctuation [CITATION NEEDED], meaning that we can use the missing data in order to help us classify $\mathbf{s}$ and $\mathbf{b}$. \# PDF of Each variable To gain an understanding of how each variable varies for each class $\mathbf{b}$ and $\mathbf{s}$ we plot the histogram of the data for each column.
+Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. This means that in both the `DER_mass_MMC` and jet-variables cases, the amount of missing data is indicative of a classification. In particular we cannot use regression to simulate missing data as we would lose valuable classifying information.
+
+### Modifying the missing data
+
+## PDF of Each variable
+
+To gain an understanding of how each variable varies for each class $\mathbf{b}$ and $\mathbf{s}$ we plot the pdf of the data for each column.
 
 ```{r}
-
 plots <- function(Parameter){
   pl <- ggplot(higgs_data, aes(x= get(Parameter), fill = Label)) +
     geom_density(alpha = 0.5) +
     labs(x = Parameter)
   return(pl)
 }
-plot_list <- lapply(variables_WithError$skim_variable,plots)
+plot_list <- lapply(colnames(higgs_data)[2:29],plots)
 
-ggarrange(plotlist = plot_list,ncol = 2, nrow = 2,combine.legend = T)
-# cowplot::plot_grid(plotlist = plot_list, nrow = 2,ncol =  1)
+ggarrange(plotlist = plot_list,ncol = 4, nrow = 3,combine.legend = T)
+
 
 ```
 
-```{r}
-pl <- ggplot(higgs_data, aes(x= DER_mass_MMC, fill = Label)) + geom_density()
-pl
+# Fisher Discriminant Analysis
 
-for (col in variables_WithError$skim_variable){
-  pl <- ggplot(higgs_data, aes(x= col, fill = Label)) + geom_density()
-  print(pl)
-  }
+Recall that Fisher Discriminant Analysis gives us a vector which we can project our data onto in order to separate our set as much as possible.
+
+```{r}
+source("R/clean_data.R")
+source("R/fda.R")
+ldahist(data = fda_pred$x[,1], g = fda_training$Label) #FDA when we include the the columns with #missing data
+fda_nomissing <- lda(Label ~ ., fda_training_nomissing) #FDA when we exclude the columns with missing data 
 ```
 
 # Running a PCA
+
+
+# Logistic Regression
+
+#
