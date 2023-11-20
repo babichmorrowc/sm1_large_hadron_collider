@@ -1,5 +1,5 @@
 # Perform Fisher Discriminant Analysis on the data
-source("R/clean_data.R")
+source(here("R/clean_data.R"))
 
 library(MASS) # package for lda
 library(caret) # ML package
