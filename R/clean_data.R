@@ -1,11 +1,12 @@
 # Load packages
 library(tidyverse)
 library(skimr)
+library(here)
 
 # Import data ------------------------------------------------------------------
 # Download the data from http://opendata.cern.ch/record/328
 # And save it in the /data folder
-higgs_data_orig <- read_csv("./data/atlas-higgs-challenge-2014-v2.csv")
+higgs_data_orig <- read_csv(here("data/atlas-higgs-challenge-2014-v2.csv"))
 skim(higgs_data_orig) # quick data summary
 
 # Clean data -------------------------------------------------------------------

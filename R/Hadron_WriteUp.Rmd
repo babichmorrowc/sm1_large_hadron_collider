@@ -7,6 +7,7 @@ output: html_document
 
 ```{r include = FALSE}
 library(tidyverse)
+library(here)
 library(skimr)
 library(ggplot2)
 library(purrr)
@@ -15,7 +16,7 @@ library(DT)
 ```
 
 ```{r}
-higgs_data_orig <- read_csv("../data/atlas-higgs-challenge-2014-v2.csv",show_col_types = F)
+higgs_data_orig <- read_csv(here("data/atlas-higgs-challenge-2014-v2.csv"),show_col_types = F)
 higgs_data <- higgs_data_orig%>%mutate(across(where(is.numeric), ~na_if(.x, -999)))
 summary_OfHiggs <- skim(higgs_data)
 ```
@@ -145,8 +146,8 @@ Some observations:
 In order to get an idea how separated our data is we perform FDA, however considering our previous study of the distribution of each variable we will perform it under different conditions
 
 ```{r}
-#source("R/clean_data.R")
-#source("R/fda.R")
+source(here("R/clean_data.R"))
+source(here("R/fda.R"))
 ```
 
 ## Keeping Angle Variables
@@ -154,13 +155,13 @@ In order to get an idea how separated our data is we perform FDA, however consid
 ### Including missing data
 
 ```{r}
-#ldahist(data = fda_pred$x[,1], g = fda_training$Label) #FDA when we include the the columns with #missing data
+ldahist(data = fda_pred$x[,1], g = fda_training$Label) #FDA when we include the the columns with #missing data
 ```
 
 ## Excluding missing data
 
 ```{r}
-#fda_nomissing <- lda(Label ~ ., fda_training_nomissing) #FDA when we exclude the columns with missing data 
+fda_nomissing <- lda(Label ~ ., fda_training_nomissing) #FDA when we exclude the columns with missing data
 ```
 
 ## Rejecting angle variables
