@@ -11,10 +11,16 @@ fda_all <- lda(Label ~ ., higgs_vars)
 # Getting:
 # Warning message:
 #   In lda.default(x, grouping, ...) : variables are collinear
-fda_all
+# fda_all
 
 fda_all_pred <- predict(fda_all, higgs_vars)
-ldahist(data = fda_all_pred$x[,1], g = higgs_vars$Label) # not a lot of separation
+# ldahist(data = fda_all_pred$x[,1], g = higgs_vars$Label) # not a lot of separation
+
+# Create scaled dataframe for ggplot
+higgs_vars_all_pred_scaled <- cbind(
+  fda_all_pred$x,
+  dplyr::select(higgs_vars, Label)
+)
 
 #### Drop uniform variables ####
 # Remove the variables that are uniformly distributed between signal & background
@@ -25,10 +31,16 @@ fda_drop_unif <- lda(Label ~ ., higgs_vars_drop_unif)
 # Getting:
 # Warning message:
 #   In lda.default(x, grouping, ...) : variables are collinear
-fda_drop_unif
+# fda_drop_unif
 
 fda_drop_unif_pred <- predict(fda_drop_unif, higgs_vars_drop_unif)
-ldahist(data = fda_drop_unif_pred$x[,1], g = higgs_vars_drop_unif$Label) # basically the same
+# ldahist(data = fda_drop_unif_pred$x[,1], g = higgs_vars_drop_unif$Label) # basically the same
+
+# Create scaled dataframe for ggplot
+higgs_vars_drop_unif_pred_scaled <- cbind(
+  fda_drop_unif_pred$x,
+  dplyr::select(higgs_vars, Label)
+)
 
 #### Drop uniform + combo variables ####
 # Also drop the individual components that sum to PRI_jet_all_pt
@@ -41,7 +53,14 @@ higgs_vars_drop_combo <- higgs_vars_drop_unif %>%
 
 fda_drop_combo <- lda(Label ~ ., higgs_vars_drop_combo)
 # No more warning message!
-fda_drop_combo
+# fda_drop_combo
 
 fda_drop_combo_pred <- predict(fda_drop_combo, higgs_vars_drop_combo)
-ldahist(data = fda_drop_combo_pred$x[,1], g = higgs_vars_drop_combo$Label) # basically the same
+# ldahist(data = fda_drop_combo_pred$x[,1], g = higgs_vars_drop_combo$Label) # basically the same
+
+# Create scaled dataframe for ggplot
+higgs_vars_drop_combo_pred_scaled <- cbind(
+  fda_drop_combo_pred$x,
+  dplyr::select(higgs_vars, Label)
+)
+

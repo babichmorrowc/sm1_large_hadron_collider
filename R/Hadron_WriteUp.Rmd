@@ -154,25 +154,39 @@ source(here("R/fda.R"))
 
 ### Including missing data
 
-```{r}
-ldahist(data = fda_pred$x[,1], g = fda_training$Label) #FDA when we include the the columns with #missing data
-```
-
-## Excluding missing data
+FDA using all variables and including missing data as `-999`: Note that we get an error about collinear variables in our dataset.
 
 ```{r}
-fda_nomissing <- lda(Label ~ ., fda_training_nomissing) #FDA when we exclude the columns with missing data
+ggplot() +
+  geom_histogram(aes(x = LD1, y = stat(density), fill = Label),
+                 data = higgs_vars_all_pred_scaled)
 ```
 
 ## Rejecting angle variables
 
 Notice that in both cases our data is not separated well at all, and there is not much difference between including or excluding missing data points.
 
+We still get the error about collinearity.
+
+```{r}
+ggplot() +
+  geom_histogram(aes(x = LD1, y = stat(density), fill = Label), data = higgs_vars_drop_unif_pred_scaled)
+```
+
+
 ### Keeping Co-linearities
 
 This is where we keep colinearites
 
 ### Rejecting Co-linearities
+
+Removing `PRI_jet_leading_pt`, `PRI_jet_subleading_pt`, `PRI_lep_pt`, and `PRI_tau_pt`, as well as the uniform angle variables. We no longer get the error about collinearity.
+
+```{r}
+ggplot() +
+  geom_histogram(aes(x = LD1, y = stat(density), fill = Label), data = higgs_vars_drop_combo_pred_scaled)
+```
+
 
 # Running a PCA
 
