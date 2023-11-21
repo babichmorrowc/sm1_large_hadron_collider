@@ -11,17 +11,20 @@ library(here)
 library(skimr)
 library(ggplot2)
 library(purrr)
-library(ggpubr)
-library(DT)
+library(ggpubr) #for ggarrange
+library(DT) #datatables
+library(tfprobability) #kldivergence package
 ```
 
-```{r}
-higgs_data_orig <- read_csv(here("data/atlas-higgs-challenge-2014-v2.csv"),show_col_types = F)
+```{r, include = FALSE}
+higgs_data_orig <- read_csv("../data/atlas-higgs-challenge-2014-v2.csv",show_col_types = F)
 higgs_data <- higgs_data_orig%>%mutate(across(where(is.numeric), ~na_if(.x, -999)))
 summary_OfHiggs <- skim(higgs_data)
 ```
 
-# The Task
+# Introduction
+
+## The Objective
 
 Our data set consists of observations from the Large Hadron Collider at CERN over the year of 2012. It is ordered data of the form $\{(\mathbf{x}_i,y_i,w_i)\}_{i \in D}$ where $\mathbf{x} \in \mathbb{R}^{30}$; $y \in \{\mathbf{b},\mathbf{s}\}$ and $w \in [0,1]$ is a weight which measures the intensity of each data point.
 
@@ -41,9 +44,19 @@ $$
 
 Where $b$ and $s$ are as above and $b_{reg}$ is a normalizing constant. Notice that this is computed over a data set $D$, so if we wish to compute this over some training or test set we must re-normalize the weights.
 
-Our task is to find some classifier $f$ which maximizes the AMS.
+Our task is to create some classifier $f$ which maximizes the AMS.
 
-# Preliminary Observations and Statistics
+## The Method
+
+As we have high dimensional data with varied distributions we will perform a lot of preliminary computation before beginning classification. The following is a loose structure of our method for tackling this problem:
+
+1.  Eliminate any obviously redundant variables such as meta-data.
+2.  Analyse and deal with any missing data.
+3.  Study the variables to find which have minimal impact on classification.
+4.  Perform logistic regression under different assumptions, i.e different variables or feature transforms.
+5.  Study the impact on the AMS.
+
+# Preliminary Statistics
 
 ## Types of Data
 
@@ -63,11 +76,11 @@ We have a few unique types of data to consider:
 
 Multiple of our variables are dependent on one or another. Since we are classifying, we want to remove as many dimensions as possible. We have the following co-dependencies:
 
--   `PRI_jet_all_pt = PRI_leading_jet_phi + PRI_subleading_pt`
+-   `PRI_jet_all_pt = PRI_jet_leading_pt + PRI_jet_subleading_pt`
 -   `DER_pt_ratio_lep_tau = PRI_lep_pt/PRI_tau_pt`
--   Jet related variables depend on `PRI_jet_num` (see next section for more)
+-   Jet-related variables depend on `PRI_jet_num` (see next section for more)
 
-This allows us to reduce the dimension of our data by removing some redundant subset of our variables. However there will be a trade off between dimension reduction and detail. If we are liberal we can remove 2+2+10 = 14 dimensions, however this would probably limit the classifier.
+This allows us to reduce the dimension of our data by removing some redundant subset of our variables. However there will be a trade off between dimension reduction and detail. If we are liberal we can remove 2+2+10 = 14 dimensions, however this would probably remove too much information.
 
 ## Missing Data
 
@@ -113,41 +126,52 @@ missing_GivenS <- apply(Signal,2,function(x){return(round(100*sum(is.na(x))/leng
 df <- datatable(data.frame(missing_GivenS,missing_GivenB,missing_GivenB-missing_GivenS),col = c("Signal","Background","Difference"),caption = "% of Missing Background and Signal Data",options = list(pageLength = 11))
 
 df
-
 ```
 
 Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. This means that in both the `DER_mass_MMC` and jet-variables cases, the amount of missing data is indicative of a classification. In particular we cannot use regression to simulate missing data as we would lose valuable classifying information. Because of this, we decide to keep the `-999` values when constructing our classifier.
 
-## Distribution of Each Variable
+## Variable Analysis
 
-To get an understanding of each variable given their classification as either $b$ or $s$ we plot their densities below.
+### The Distributions
 
-```{r setup, warning=FALSE,,message = FALSE, echo = FALSE,fig.align="center", echo = FALSE,fig.width = 14}
+To get an understanding of the behavior of variable given their classification, we plotted their densities, along with the Mutual Information $I$, which is a positive definite measure of difference between two distributions. The entire list can be found in the appendix but here are a few of note:
+
+```{r, warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height= 10}
 plots <- function(Parameter){
-  pl <- ggplot(higgs_data, aes(x= get(Parameter), fill = Label)) +
+  pl <- ggplot(higgs_data, aes(x= get(Parameter),y = ..scaled.., fill = Label)) +
     geom_density(alpha = 0.5) +
     labs(x = Parameter)
   return(pl)
 }
 
-cols_ToPlot <- c(colnames(higgs_data)[2:23],colnames(higgs_data)[25:31]) #remove jet_num
+cols_ToPlot <- c(colnames(higgs_data)[2:3],colnames(higgs_data)[29:30]) #remove jet_num
 plot_list <- lapply(cols_ToPlot,plots)
-ggarrange(plotlist = plot_list,ncol = 2, nrow = 2, align = "v", combine.legend = TRUE)
+ggarrange(plotlist = plot_list,ncol = 2, nrow = 2, align = "v", common.legend = TRUE)
 ```
 
-Some observations:
+Note that the data for these plots have `NA` instead of `-999` for missing data, again see appendix for plots with `-999` included. Some key takeaways from these plots are:
 
--   We see that `PRI_tau_phi`,`PRI_lep_phi`, `PRI_met_phi` and `PRI_jet_leading_phi` are uniformly distributed and that there is very little variation between the classifications. This leads us to consider rejecting them from our classification, reducing the dimension by 4.
+-   Many of our parameters are over the range $[-\pi,\pi]$ as they correspond to the angles observed in interactions.
 
--   We can see the co-linearity of `PRI_jet_all_pt`,`PRI_leading_jet_phi` and `PRI_subleading_pt`, as previously stated we will reject some subset of these for our classification.
+-   We see that `PRI_tau_phi`,`PRI_lep_phi`, `PRI_met_phi`,`PRI_jet_leading_phi`and `PRI_jet_subleading_phi` are uniformly distributed and that there is very little variation between the classifications. Additionally all except `PRI_jet_subleading_phi` are unaffected when we include the `-999` values. This leads us to consider rejecting them from our classification, reducing the dimension by up to 5.
+
+-   The parameters `PRI_tau_eta` and `PRI_lep_eta` have exotic distributions which vary with classification.
+
+-   We have many `single peak` distributions such as `DER_mass_MMC`,`DER_mass_transverse_met_lep` and `DER_pt_ratio_lep_tau` which have clear variation between the classes.
+
+-   We can see that the Jet-related variables have clear variation between the classes, reinforcing our need to use them and their corresponding `-999` values.
+
+### K-L Divergence between b and s
+
+To formalize our notion of the distributions changing between different classes we can compute the K-L divergence between the two distributions for each variable. Recall that the K-L divergence gives a positive definite measure of distance between two distributions. Like with the pdf plots, a full table of K-L divergence can be found in the appendix, but here are a few of note:
 
 # Fisher Discriminant Analysis
 
-In order to get an idea how separated our data is we perform FDA, however considering our previous study of the distribution of each variable we will perform it under different conditions
+In order to get an idea how separated our data is we perform FDA, in particular we want to find out how rejecting certain families of variables affects the separation of our classes. In turn telling us what we can reject. As we discussed in the previous section, multiple variables related to measured angles were uniformly distributed and did vary between classes either, therefore we will split our FDA into two cases to see the difference. Additionally we will remove multiple codependent variables and compare how this affects the result.
 
 ```{r}
-source(here("R/clean_data.R"))
-source(here("R/fda.R"))
+#source("clean_data.R")
+#source("fda.R")
 ```
 
 ## Keeping Angle Variables
@@ -173,12 +197,7 @@ ggplot() +
   geom_histogram(aes(x = LD1, y = stat(density), fill = Label), data = higgs_vars_drop_unif_pred_scaled)
 ```
 
-
-### Keeping Co-linearities
-
-This is where we keep colinearites
-
-### Rejecting Co-linearities
+## Rejecting Co-linearities
 
 Removing `PRI_jet_leading_pt`, `PRI_jet_subleading_pt`, `PRI_lep_pt`, and `PRI_tau_pt`, as well as the uniform angle variables. We no longer get the error about collinearity.
 
@@ -187,7 +206,41 @@ ggplot() +
   geom_histogram(aes(x = LD1, y = stat(density), fill = Label), data = higgs_vars_drop_combo_pred_scaled)
 ```
 
-
-# Running a PCA
-
 # Logistic Regression
+
+## Implementation over two variables
+
+# Appendix
+
+
+## Density of each parameter without `-999` values
+
+```{r setup, warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height = 35}
+plots <- function(Parameter){
+  pl <- ggplot(higgs_data, aes(x= get(Parameter),y= after_stat(scaled), fill = Label)) +
+    geom_density(alpha = 0.5) +
+    labs(x = Parameter)
+  return(pl)
+}
+
+plots2 <- function(Parameter){
+  pl <- ggplot(higgs_data_orig, aes(x= get(Parameter),y=..scaled.., fill = Label)) +
+    geom_density(alpha = 0.5) +
+    labs(x = Parameter)
+  return(pl)
+}
+
+
+
+cols_ToPlot <- c(colnames(higgs_data)[2:23],colnames(higgs_data)[25:31]) #remove jet_num
+plot_list <- lapply(cols_ToPlot,plots)
+ggarrange(plotlist = plot_list,ncol = 2, nrow = 15, align = "v", common.legend = TRUE)
+```
+
+## Density of each parameter with `-999` values
+
+```{r,warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height = 35}
+cols_ToPlot2 <- c(colnames(higgs_data)[2:24],colnames(higgs_data)[25:31]) #remove jet_num
+plot_list2 <- lapply(cols_ToPlot2,plots2)
+ggarrange(plotlist = plot_list2,ncol = 2, nrow = 15, align = "v", common.legend = TRUE)
+```
