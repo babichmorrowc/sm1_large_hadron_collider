@@ -16,13 +16,8 @@ library(DT) #datatables
 library(tfprobability) #kldivergence package
 ```
 
-<<<<<<< Updated upstream
-```{r}
-higgs_data_orig <- read_csv(here("data/atlas-higgs-challenge-2014-v2.csv"),show_col_types = F)
-=======
 ```{r, include = FALSE}
 higgs_data_orig <- read_csv("../data/atlas-higgs-challenge-2014-v2.csv",show_col_types = F)
->>>>>>> Stashed changes
 higgs_data <- higgs_data_orig%>%mutate(across(where(is.numeric), ~na_if(.x, -999)))
 summary_OfHiggs <- skim(higgs_data)
 ```
@@ -61,7 +56,7 @@ As we have high dimensional data with varied distributions we will perform a lot
 4.  Perform logistic regression under different assumptions, i.e different variables or feature transforms.
 5.  Study the impact on the AMS.
 
-# Preliminary Observations and Statistics
+# Preliminary Statistics
 
 ## Types of Data
 
@@ -135,7 +130,7 @@ df
 
 Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. This means that in both the `DER_mass_MMC` and jet-variables cases, the amount of missing data is indicative of a classification. In particular we cannot use regression to simulate missing data as we would lose valuable classifying information. Because of this, we decide to keep the `-999` values when constructing our classifier.
 
-## Impact of Each Variable
+## Variable Analysis
 
 ### The Distributions
 
@@ -154,9 +149,7 @@ plot_list <- lapply(cols_ToPlot,plots)
 ggarrange(plotlist = plot_list,ncol = 2, nrow = 2, align = "v", common.legend = TRUE)
 ```
 
-Note that the data for these plots have `NA` instead of `-999` for missing data, again see appendix for plots with `-999` included.
-
-### Key Takeaways
+Note that the data for these plots have `NA` instead of `-999` for missing data, again see appendix for plots with `-999` included. Some key takeaways from these plots are:
 
 -   Many of our parameters are over the range $[-\pi,\pi]$ as they correspond to the angles observed in interactions.
 
@@ -172,23 +165,13 @@ Note that the data for these plots have `NA` instead of `-999` for missing data,
 
 To formalize our notion of the distributions changing between different classes we can compute the K-L divergence between the two distributions for each variable. Recall that the K-L divergence gives a positive definite measure of distance between two distributions. Like with the pdf plots, a full table of K-L divergence can be found in the appendix, but here are a few of note:
 
-```{r, include = FALSE}
-
-```
-
 # Fisher Discriminant Analysis
 
 In order to get an idea how separated our data is we perform FDA, in particular we want to find out how rejecting certain families of variables affects the separation of our classes. In turn telling us what we can reject. As we discussed in the previous section, multiple variables related to measured angles were uniformly distributed and did vary between classes either, therefore we will split our FDA into two cases to see the difference. Additionally we will remove multiple codependent variables and compare how this affects the result.
 
-<<<<<<< Updated upstream
 ```{r}
-source(here("R/clean_data.R"))
-source(here("R/fda.R"))
-=======
-```{r,include = FALSE}
 #source("clean_data.R")
 #source("fda.R")
->>>>>>> Stashed changes
 ```
 
 ## Keeping Angle Variables
