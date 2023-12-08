@@ -2,7 +2,9 @@
 title: "Maximising AMS by classifying Higgs Boson Data - a love story"
 author: "Kieran Morris, Cecina Babich Morrow and Daniella Montgomery"
 date: "2023-11-07"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r include = FALSE}
@@ -17,7 +19,7 @@ library(tfprobability) #kldivergence package
 ```
 
 ```{r, include = FALSE}
-higgs_data_orig <- read_csv("../data/atlas-higgs-challenge-2014-v2.csv",show_col_types = F)
+higgs_data_orig <- read_csv(here("data/atlas-higgs-challenge-2014-v2.csv"),show_col_types = F)
 higgs_data <- higgs_data_orig%>%mutate(across(where(is.numeric), ~na_if(.x, -999)))
 summary_OfHiggs <- skim(higgs_data)
 ```
@@ -211,7 +213,6 @@ ggplot() +
 ## Implementation over two variables
 
 # Appendix
-
 
 ## Density of each parameter without `-999` values
 
