@@ -170,8 +170,8 @@ To formalize our notion of the distributions changing between different classes 
 In order to get an idea how separated our data is we perform FDA, in particular we want to find out how rejecting certain families of variables affects the separation of our classes. In turn telling us what we can reject. As we discussed in the previous section, multiple variables related to measured angles were uniformly distributed and did vary between classes either, therefore we will split our FDA into two cases to see the difference. Additionally we will remove multiple codependent variables and compare how this affects the result.
 
 ```{r}
-#source("clean_data.R")
-#source("fda.R")
+source(here("R/clean_data.R"))
+source(here("R/fda.R"))
 ```
 
 ## Keeping Angle Variables
