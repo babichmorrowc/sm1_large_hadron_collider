@@ -3,8 +3,8 @@ title: "Maximising AMS by classifying Higgs Boson Data - a love story"
 author: "Kieran Morris, Cecina Babich Morrow and Daniella Montgomery"
 date: "2023-11-07"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r include = FALSE}
