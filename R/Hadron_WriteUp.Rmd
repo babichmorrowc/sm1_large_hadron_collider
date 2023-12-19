@@ -182,9 +182,9 @@ The following is the list of the variables with the lowest mutual information wh
 
 # Fisher Discriminant Analysis
 
-FDA tells us how separated our data can possibly be. This can be a useful aid to find out whether a linear classifier is appropriate and can additionally be used to see how removing variables affects the separability of our data.
+FDA creates an embedding that tells us how linearly separated our data can possibly be by maximizing between class scatterness and minimizing within class scatterness. This can be a useful aid to find out whether a linear classifier is appropriate and can additionally be used to see how removing variables affects the separability of our data.
 
-We consider three increasing cases of variables elimination: 1) Removing all 4 algebraic co-dependencies 2) Removing the above and any uniform variables. 3) Removing the above and the 10 variables with lowest mutual information.
+We consider three increasing cases of variables elimination: 1) Including all variables; 2) Removing all 4 algebraic co-dependencies; 3) Removing the above and any uniform variables; 4) Removing the above and the 10 variables with lowest mutual information. The following plots show the results of the FDA embedding for each of these cases.
 
 ```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.width = 14,fig.height= 5}
 source(here("R/fda.R"))
@@ -203,6 +203,24 @@ FDA_codep_unif <- ggplot() +
 
 plot_grid(FDA_all,FDA_codep,FDA_codep_unif,nrow = 2)
 ```
+
+For these different FDA embeddings, we can compare the ratio between between class scatterness and within class scatterness:
+
+```{r}
+datatable(
+  data = data.frame(
+    variables = c("All variables",
+                  "Without codependencies",
+                  "Without codependencies and uniform variables"),
+    scatter_ratio = c(scatter_ratio_all,
+                        scatter_ratio_drop_codep,
+                        scatter_ratio_drop_codep_unif)
+  ),
+  colnames = c("Variables included", "Scatter ratio")
+)
+```
+
+We find that removing variables slightly lowers the linear separability of the data, but in general the values are comparable. Based on the plots, we can conclude that it is not possible to achieve a high degree of linear separability between the signal and background events, indicating that a feature transform is most likely appropriate.
 
 # Principle Component Analysis
 
