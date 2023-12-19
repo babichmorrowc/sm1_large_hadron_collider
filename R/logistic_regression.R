@@ -27,8 +27,8 @@ higgs_testing_drop_combo <- higgs_testing %>%
                    PRI_lep_pt,
                    PRI_tau_pt))
 # Calculate adjusted weights for testing data
-testing_weights <- adjust_weights(complete_data = higgs_data,
-                                  subset_data = higgs_data[-index,],
+testing_weights <- adjust_weights(complete_data = higgs_data_orig,
+                                  subset_data = higgs_data_orig[-index,],
                                   unadjusted_weight_col = "Weight",
                                   label_col = "Label")
 
