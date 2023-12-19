@@ -15,7 +15,7 @@ fitted_svm_linear_all <- readRDS("output/fitted_svm_linear_all.RDS")
 approx_mean_sig(predictions = fitted_svm_linear_all,
                 labels = higgs_testing$Label,
                 weights = testing_weights)
-# 2.009864
+# 2.013289
 
 ##### With a radial kernel #####
 svm_radial_all <- svm(Label ~ ., data = higgs_training, kernel = "radial")
@@ -24,6 +24,6 @@ fitted_svm_radial_all <- predict(svm_radial_all, higgs_testing)
 approx_mean_sig(predictions = fitted_svm_radial_all,
                 labels = higgs_testing$Label,
                 weights = testing_weights)
-# 2.743058
+# 2.748356
 
 

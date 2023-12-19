@@ -1,4 +1,4 @@
-approx_mean_sig <- function(predictions, labels, weights, b_reg = 110) {
+approx_mean_sig <- function(predictions, labels, weights, b_reg = 10) {
   true_pos <- sum(weights[predictions == "s" & labels == "s"])
   false_pos <- sum(weights[predictions == "s" & labels == "b"])
   ams <- sqrt(2 * ((true_pos + false_pos + b_reg) * log(1 + (true_pos / (false_pos + b_reg))) - true_pos))
