@@ -14,13 +14,13 @@ adjust_weights <- function(complete_data, subset_data, unadjusted_weight_col = "
 }
 
 # Test that adjust_weights is working as expected on the Kaggle weights:
-kaggle_adjust_weights_t <- adjust_weights(complete_data = higgs_data,
-                                        subset_data = higgs_data[higgs_data$KaggleSet == "t",],
+kaggle_adjust_weights_t <- adjust_weights(complete_data = higgs_data_orig,
+                                        subset_data = higgs_data_orig[higgs_data_orig$KaggleSet == "t",],
                                         unadjusted_weight_col = "Weight",
                                         label_col = "Label")
-all.equal(kaggle_adjust_weights_t, higgs_data$KaggleWeight[higgs_data$KaggleSet == "t"])
-kaggle_adjust_weights_b <- adjust_weights(complete_data = higgs_data,
-                                          subset_data = higgs_data[higgs_data$KaggleSet == "b",],
+all.equal(kaggle_adjust_weights_t, higgs_data_orig$KaggleWeight[higgs_data_orig$KaggleSet == "t"])
+kaggle_adjust_weights_b <- adjust_weights(complete_data = higgs_data_orig,
+                                          subset_data = higgs_data_orig[higgs_data_orig$KaggleSet == "b",],
                                           unadjusted_weight_col = "Weight",
                                           label_col = "Label")
-all.equal(kaggle_adjust_weights_b, higgs_data$KaggleWeight[higgs_data$KaggleSet == "b"])
+all.equal(kaggle_adjust_weights_b, higgs_data_orig$KaggleWeight[higgs_data_orig$KaggleSet == "b"])

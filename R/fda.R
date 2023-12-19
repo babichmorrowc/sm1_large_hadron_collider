@@ -36,7 +36,7 @@ higgs_vars_drop_codep_unif_matrix <- higgs_vars_drop_codep_unif %>%
 #### With all variables ####
 fisher_discrim_all <- fisher_discrim(higgs_vars, class_pos = "s", class_neg = "b")
 fisher_discrim_all_pred <- apply(as.matrix(select(higgs_vars, -Label)), 1, function(x) sum(x*fisher_discrim_all))
-scatter_ratio(higgs_vars, class_pos = "s", class_neg = "b", w = fisher_discrim_all)
+scatter_ratio_all <- scatter_ratio(higgs_vars, class_pos = "s", class_neg = "b", w = fisher_discrim_all)
 
 # Create scaled dataframe for ggplot
 fisher_discrim_higgs_vars_all <- cbind(
@@ -51,7 +51,7 @@ fisher_discrim_higgs_vars_all <- cbind(
 #### Drop algebraic co-dependencies ####
 fisher_discrim_drop_codep <- fisher_discrim(higgs_vars_drop_codep, class_pos = "s", class_neg = "b")
 fisher_discrim_drop_codep_pred <- apply(higgs_vars_drop_codep_matrix, 1, function(x) sum(x*fisher_discrim_drop_codep))
-scatter_ratio(higgs_vars_drop_codep, class_pos = "s", class_neg = "b", w = fisher_discrim_drop_codep)
+scatter_ratio_drop_codep <- scatter_ratio(higgs_vars_drop_codep, class_pos = "s", class_neg = "b", w = fisher_discrim_drop_codep)
 
 # Create scaled dataframe for ggplot
 fisher_discrim_higgs_vars_drop_codep <- cbind(
@@ -67,7 +67,7 @@ fisher_discrim_higgs_vars_drop_codep <- cbind(
 #### Drop uniform variables ####
 fisher_discrim_drop_codep_unif <- fisher_discrim(higgs_vars_drop_codep_unif, class_pos = "s", class_neg = "b")
 fisher_discrim_drop_codep_unif_pred <- apply(higgs_vars_drop_codep_unif_matrix, 1, function(x) sum(x*fisher_discrim_drop_codep_unif))
-scatter_ratio(higgs_vars_drop_codep_unif, class_pos = "s", class_neg = "b", w = fisher_discrim_drop_codep_unif)
+scatter_ratio_drop_codep_unif <- scatter_ratio(higgs_vars_drop_codep_unif, class_pos = "s", class_neg = "b", w = fisher_discrim_drop_codep_unif)
 
 # Create scaled dataframe for ggplot
 fisher_discrim_higgs_vars_drop_codep_unif <- cbind(

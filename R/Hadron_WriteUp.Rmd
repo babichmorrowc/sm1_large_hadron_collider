@@ -184,7 +184,7 @@ The following is the list of the variables with the lowest mutual information wh
 
 FDA creates an embedding that tells us how linearly separated our data can possibly be by maximizing between class scatterness and minimizing within class scatterness. This can be a useful aid to find out whether a linear classifier is appropriate and can additionally be used to see how removing variables affects the separability of our data.
 
-We consider three increasing cases of variables elimination: 1) Including all variables; 2) Removing all 4 algebraic co-dependencies; 3) Removing the above and any uniform variables; 4) Removing the above and the 10 variables with lowest mutual information. The following plots show the results of the FDA embedding for each of these cases.
+We consider four increasing cases of variables elimination: 1) Including all variables; 2) Removing all 4 algebraic co-dependencies; 3) Removing the above and any uniform variables; 4) Removing the above and the 10 variables with lowest mutual information. The following plots show the results of the FDA embedding for each of these cases.
 
 ```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.width = 14,fig.height= 5}
 source(here("R/fda.R"))
