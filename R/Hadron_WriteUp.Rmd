@@ -160,8 +160,7 @@ Note that the data for these plots the variables have `NA` instead of `-999` for
 While plots are very pretty, we must have a justifiable mathematical result to validate any variable removal. To formalize the idea of two distributions being 'the same' when we switch from $b$ to $s$: we use the Mutual Information.
 
 Recall that the mutual information between two random variables is a positive definite, symmetric measure of distance between two distributions defined as follows: $$
-I(X,Y) = D_{KL}(p_{XY} \mid \mid p_Xp_Y)
-$$
+I(X,Y) = D_{KL}(p_{XY} \mid \mid p_Xp_Y)$$
 
 where $D_{KL}$ is the KL- divergence. The mutual information has the property that $I(X,Y) = 0$ if and only if $X$ and $Y$ are independent. This is great for our purposes as if we have some variable $V$ and \$I(V\mid y = b, V\mid y = s) \approx 0 \$ then we can conclude this variable has little impact on classification and can be removed.
 
@@ -190,14 +189,19 @@ We consider three increasing cases of variables elimination: 1) Removing all 4 a
 ```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.width = 14,fig.height= 5}
 source(here("R/fda.R"))
 FDA_all <- ggplot() +
-  geom_histogram(aes(x = LD1, y = stat(density), fill = Label),
-                 data = higgs_vars_all_pred_scaled)+ggtitle("FDA with all variables")
-FDA_unif <- ggplot() +
-  geom_histogram(aes(x = LD1, y = stat(density), fill = Label), data = higgs_vars_drop_unif_pred_scaled)+ggtitle("FDA without uniform variables")
-FDA_lin <- ggplot() +
-  geom_histogram(aes(x = LD1, y = stat(density), fill = Label), data = higgs_vars_drop_combo_pred_scaled)+ggtitle("FDA without colinear and uniform variables")
+  geom_histogram(aes(x = fisher_discrim_all_pred, y = stat(density), fill = Label),
+                 data = fisher_discrim_higgs_vars_all) +
+  ggtitle("FDA with all variables")
+FDA_codep <- ggplot() +
+  geom_histogram(aes(x = fisher_discrim_drop_codep_pred, y = stat(density), fill = Label),
+                 data = fisher_discrim_higgs_vars_drop_codep) +
+  ggtitle("FDA without codependencies")
+FDA_codep_unif <- ggplot() +
+  geom_histogram(aes(x = fisher_discrim_drop_codep_unif_pred, y = stat(density), fill = Label),
+                 data = fisher_discrim_higgs_vars_drop_codep_unif) +
+  ggtitle("FDA without codependencies and uniform variables")
 
-plot_grid(FDA_all,FDA_unif,FDA_lin,nrow = 1)
+plot_grid(FDA_all,FDA_codep,FDA_codep_unif,nrow = 2)
 ```
 
 # Principle Component Analysis
