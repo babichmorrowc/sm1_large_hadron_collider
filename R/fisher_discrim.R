@@ -17,3 +17,26 @@ fisher_discrim <- function(data, label_col = "Label", class_pos, class_neg) {
   w <- solve(S_w) %*% mu_diff
   return(w)
 }
+
+scatter_ratio <- function(data, label_col = "Label", class_pos, class_neg, w) {
+  data_matrix <- data %>% 
+    select(-{{label_col}}) %>% 
+    as.matrix()
+  pos_rows <- data[,label_col] == class_pos
+  neg_rows <- data[,label_col] == class_neg
+  wT_x <- apply(data_matrix, 1, function(x) sum(x*w))
+  mu_pos <- sum(wT_x[pos_rows]) / sum(pos_rows)
+  mu_neg <- sum(wT_x[neg_rows]) / sum(neg_rows)
+  mu <- sum(wT_x) / nrow(data)
+  
+  # Calculate within class scatterness
+  s_w_pos <- sum((wT_x[pos_rows] - mu_pos)^2)
+  s_w_neg <- sum((wT_x[neg_rows] - mu_neg)^2)
+  
+  # Calculate between class scatterness
+  s_b_pos <- sum(pos_rows) * (mu_pos - mu)^2
+  s_b_neg <- sum(neg_rows) * (mu_neg - mu)^2
+  
+  ratio <- (s_b_pos + s_b_neg) / (s_w_pos + s_w_neg)
+  return(ratio)
+}
