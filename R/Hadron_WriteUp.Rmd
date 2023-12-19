@@ -4,6 +4,7 @@ author: "Kieran Morris, Cecina Babich Morrow and Daniella Montgomery"
 date: "2023-11-07"
 output:
   html_document: default
+  pdf_document: default
 ---
 
 ```{r include = FALSE}
