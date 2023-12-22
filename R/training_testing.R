@@ -2,7 +2,7 @@ library(caret) # ML package
 
 # Training vs test split -------------------------------------------------------
 set.seed(999)
-index <- createDataPartition(higgs_vars$Label, p = 0.05, list = FALSE)
+index <- createDataPartition(higgs_vars$Label, p = 0.20, list = FALSE)
 # Training data
 higgs_training <- higgs_vars[index,] %>% 
   mutate(Label = as.factor(Label))
