@@ -16,7 +16,7 @@ tictoc::toc()
 # fitted_svm_linear_all <- readRDS("output/fitted_svm_linear_all.RDS")
 
 # Calculate AMS
-approx_mean_sig(predictions = fitted_svm_linear_all,
+approx_median_sig(predictions = fitted_svm_linear_all,
                 labels = higgs_testing$Label,
                 weights = testing_weights)
 # 2.010107
@@ -31,7 +31,7 @@ tictoc::tic()
 fitted_svm_radial_all <- predict(svm_radial_all, higgs_testing) # takes ~28 minutes onn 20% training set
 tictoc::toc()
 saveRDS(fitted_svm_radial_all, here("output/fitted_svm_radial_all_20.RDS")) # save object since it takes a long time to make
-approx_mean_sig(predictions = fitted_svm_radial_all,
+approx_median_sig(predictions = fitted_svm_radial_all,
                 labels = higgs_testing$Label,
                 weights = testing_weights)
 # 2.813594

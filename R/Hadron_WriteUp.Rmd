@@ -8,6 +8,8 @@ output:
 ---
 
 ```{r include = FALSE}
+# devtools::install_github("babichmorrowc/higgiesmalls") # install our R package if necessary
+library(higgiesmalls)
 library(tidyverse)
 library(here)
 library(skimr)
@@ -206,7 +208,7 @@ plot_grid(FDA_all,FDA_codep,FDA_codep_unif,nrow = 2)
 
 For these different FDA embeddings, we can compare the ratio between between class scatterness and within class scatterness:
 
-```{r}
+```{r echo = FALSE}
 datatable(
   data = data.frame(
     variables = c("All variables",
