@@ -174,10 +174,17 @@ plot_sample_joint_densities
 
 As you can see for `GOOD_EXAMPLE` we can see a large variation between the joint and product distributions, whereas with `BAD_EXAMP` we have almost identical distributions.
 
-The following is the list of the variables with the lowest mutual information which we can remove to reduce our dimensions.
+Below we display the mutual information of all of our variables.
 
-```{r}
-#source(here("R/Mutual_Information"))
+```{r,echo = FALSE, warning=FALSE,message = FALSE}
+source(here("R/Mutual_Information.R"))
+
+header <- names(higgs_vars[0:30])
+MIData2 <- data.frame(names = header, data = as.vector(unlist(sapply(header,Mutual_Information))))
+MI_Data2_Ordered <- MIData2[order(MIData2$data),]
+dt <- datatable(MI_Data2_Ordered,col =c("Variable","Mutual Information"),
+                options = list(pagelength=10))
+dt
 ```
 
 # Fisher Discriminant Analysis
