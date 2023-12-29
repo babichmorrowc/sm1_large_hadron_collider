@@ -8,9 +8,9 @@ library(ggplot2)
 library(caret)
 
 # Training / test split --------------------------------------------------------
-# Take 80% of the data for training, 20% for testing, removing missing data
+# Take 80% of the data for training, 20% for testing and removing uninteresting variables
 set.seed(999)
-higgs_vars_subset <- select(higgs_vars, - all_of(missing_vars))
+higgs_vars_subset <- select(higgs_vars,- c(all_of(missing_vars),c("PRI_jet_leading_phi","PRI_met_phi","PRI_lep_phi","PRI_tau_phi")))
 index <- createDataPartition(higgs_vars_subset$Label, p = 0.0004, list = FALSE)
 pca_training <- higgs_vars_subset[index,]
 pca_testing <- higgs_vars_subset[-index,]
@@ -76,4 +76,6 @@ ggplot(data=res.pca.df, aes(x=attributes(res.pca.df)$row.names, y=res.pca.df[,3]
   ggtitle("Principle Component 3 Eigenvector") +
   xlab("Variables") +
   ylab("Contribution to PC3")
+
+
 
