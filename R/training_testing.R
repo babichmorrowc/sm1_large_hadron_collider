@@ -47,6 +47,13 @@ index_20 <- createDataPartition(higgs_vars$Label, p = 0.2, list = FALSE)
 # Training data
 higgs_training_20 <- higgs_vars[index_20,] %>% 
   mutate(Label = as.factor(Label))
+# Drop codependencies & uniform variables
+higgs_training_20_drop_codep_unif <- higgs_training_20 %>% 
+  dplyr::select(-all_of(unif_vars),
+                -c(PRI_jet_leading_pt,
+                   PRI_jet_subleading_pt,
+                   PRI_lep_pt,
+                   PRI_tau_pt))
 
 # Calculate adjusted weights for training data
 training_weights_20 <- adjust_weights(complete_data = higgs_data_orig,
@@ -58,6 +65,13 @@ training_weights_20 <- adjust_weights(complete_data = higgs_data_orig,
 # Testing data
 higgs_testing_20 <- higgs_vars[-index_20,] %>% 
   mutate(Label = as.factor(Label))
+# Drop codependencies & uniform variables
+higgs_testing_20_drop_codep_unif <- higgs_testing_20 %>% 
+  dplyr::select(-all_of(unif_vars),
+                -c(PRI_jet_leading_pt,
+                   PRI_jet_subleading_pt,
+                   PRI_lep_pt,
+                   PRI_tau_pt))
 # Calculate adjusted weights for testing data
 testing_weights_20 <- adjust_weights(complete_data = higgs_data_orig,
                                      subset_data = higgs_data_orig[-index_20,],
