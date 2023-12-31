@@ -2,6 +2,7 @@
 library(tidyverse)
 library(skimr)
 library(here)
+library(higgiesmalls)
 
 # Import data ------------------------------------------------------------------
 # Download the data from http://opendata.cern.ch/record/328

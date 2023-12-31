@@ -1,7 +1,4 @@
 # Perform Fisher Discriminant Analysis on the data
-source(here("R/fisher_discrim.R"))
-# library(MASS) # package for lda
-# library(lfda) # package for lfda
 
 # Data cleaning ----------------------------------------------------------------
 #### Drop algebraic co-dependencies ####
