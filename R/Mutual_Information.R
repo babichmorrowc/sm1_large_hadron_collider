@@ -9,10 +9,10 @@ source(here("R/clean_data.R"))
 Mutual_Information<- function(parameter){
   PGivenB <- filter(higgs_data_na,Label == "b")[parameter]
   PGivenS <- filter(higgs_data_na,Label == "s")[parameter]
-  PGivenB_Est <- sample(as.vector(unlist(PGivenB)),size = 10000)
-  PGivenS_Est <- sample(as.vector(unlist(PGivenS)),size = 10000)
-  ParaB <- discretize(PGivenB_Est, nbins = 200)
-  ParaS <- discretize(PGivenS_Est,nbins = 200)
+  PGivenB_Est <- sample(as.vector(unlist(PGivenB)),size = 20000,replace = FALSE)
+  PGivenS_Est <- sample(as.vector(unlist(PGivenS)),size = 20000,replace = FALSE)
+  ParaB <- discretize(PGivenB_Est, nbins = 20000)
+  ParaS <- discretize(PGivenS_Est,nbins = 20000)
   return(mutinformation(ParaB,ParaS))
 }
 
