@@ -1,6 +1,7 @@
 library(caret) # ML package
 
 # Training vs test split -------------------------------------------------------
+#### 0.1% training for test purposes #####
 set.seed(999)
 index <- createDataPartition(higgs_vars$Label, p = 0.001, list = FALSE)
 # Training data
@@ -54,6 +55,12 @@ higgs_training_20_drop_codep_unif <- higgs_training_20 %>%
                    PRI_jet_subleading_pt,
                    PRI_lep_pt,
                    PRI_tau_pt))
+# Use top 10 mutual information only
+top_10_mut_info <- c('DER_pt_tot', 'DER_mass_MMC', 'PRI_tau_pt', 'PRI_lep_pt', 'DER_mass_vis', 'PRI_met', 'DER_mass_transverse_met_lep', 'DER_pt_h', 'DER_sum_pt', 'PRI_met_sumet')
+higgs_training_20_top_mi <- higgs_training_20 %>% 
+  dplyr::select(top_10_mut_info,
+                Label)
+
 
 # Calculate adjusted weights for training data
 training_weights_20 <- adjust_weights(complete_data = higgs_data_orig,
@@ -72,6 +79,11 @@ higgs_testing_20_drop_codep_unif <- higgs_testing_20 %>%
                    PRI_jet_subleading_pt,
                    PRI_lep_pt,
                    PRI_tau_pt))
+# Use top 10 mutual information only
+higgs_testing_20_top_mi <- higgs_testing_20 %>% 
+  dplyr::select(top_10_mut_info,
+                Label)
+
 # Calculate adjusted weights for testing data
 testing_weights_20 <- adjust_weights(complete_data = higgs_data_orig,
                                      subset_data = higgs_data_orig[-index_20,],

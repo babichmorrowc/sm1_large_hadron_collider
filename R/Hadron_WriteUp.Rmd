@@ -44,7 +44,7 @@ $$
 \text{AMS}(f) = \sqrt{2\left(s+b+b_{reg}\ln \left (1+ \frac{s}{b+b_{reg}} \right) -s  \right)}
 $$
 
-Where $b$ and $s$ are as above and $b_{reg}$ is a normalizing constant. Notice that this is computed over a data set $D$, so if we wish to compute this over some training or test set we must re-normalize the weights.
+Where $b$ and $s$ are as above and $b_{reg}$ is a normalizing constant. Notice that this is computed over a data set $D$, so if we wish to compute this over some training or test set we must re-normalize the weights. We wrote a function `adjust_weights` to do this re-normalization, as well as a function `approx_median_sig` to calculate the resulting AMS value.
 
 Our task is to create some classifier $f$ which maximizes the AMS.
 
@@ -191,7 +191,7 @@ dt
 
 # Fisher Discriminant Analysis
 
-FDA creates an embedding that tells us how linearly separated our data can possibly be by maximizing between class scatterness and minimizing within class scatterness. This can be a useful aid to find out whether a linear classifier is appropriate and can additionally be used to see how removing variables affects the separability of our data.
+FDA creates an embedding that tells us how linearly separated our data can possibly be by maximizing between class scatterness and minimizing within class scatterness. This can be a useful aid to find out whether a linear classifier is appropriate and can additionally be used to see how removing variables affects the separability of our data. We created two new functions in order to perform FDA: `fisher_discrim` to find the embedding vector that maximises the ratio of between- to within-class scatterness and `scatter_ratio` to calculate this ratio for a given dataset and embedding vector. Code for these functions can be found in our R package [`higgiesmalls`](https://github.com/babichmorrowc/higgiesmalls).
 
 We consider four increasing cases of variables elimination: 1) Including all variables; 2) Removing all 4 algebraic co-dependencies; 3) Removing the above and any uniform variables; 4) Removing the above and the 10 variables with lowest mutual information. The following plots show the results of the FDA embedding for each of these cases.
 
@@ -200,17 +200,29 @@ source(here("R/fda.R"))
 FDA_all <- ggplot() +
   geom_histogram(aes(x = fisher_discrim_all_pred, y = stat(density), fill = Label),
                  data = fisher_discrim_higgs_vars_all) +
-  ggtitle("FDA with all variables")
+  labs(x = expression(w^T * x)) +
+  ggtitle("FDA with all variables") +
+  theme_bw()
 FDA_codep <- ggplot() +
   geom_histogram(aes(x = fisher_discrim_drop_codep_pred, y = stat(density), fill = Label),
                  data = fisher_discrim_higgs_vars_drop_codep) +
-  ggtitle("FDA without codependencies")
+  labs(x = expression(w^T * x)) +
+  ggtitle("FDA without codependencies") +
+  theme_bw()
 FDA_codep_unif <- ggplot() +
   geom_histogram(aes(x = fisher_discrim_drop_codep_unif_pred, y = stat(density), fill = Label),
                  data = fisher_discrim_higgs_vars_drop_codep_unif) +
-  ggtitle("FDA without codependencies and uniform variables")
+  labs(x = expression(w^T * x)) +
+  ggtitle("FDA without codependencies and uniform variables") +
+  theme_bw()
+FDA_mut_info <- ggplot() +
+  geom_histogram(aes(x = fisher_discrim_mut_info_pred, y = stat(density), fill = Label),
+                 data = fisher_discrim_higgs_vars_mut_info) +
+  labs(x = expression(w^T * x)) +
+  ggtitle("FDA with highest mutual information") +
+  theme_bw()
 
-plot_grid(FDA_all,FDA_codep,FDA_codep_unif,nrow = 2)
+plot_grid(FDA_all,FDA_codep,FDA_codep_unif,FDA_mut_info,nrow = 2)
 ```
 
 For these different FDA embeddings, we can compare the ratio between between class scatterness and within class scatterness:
@@ -220,16 +232,18 @@ datatable(
   data = data.frame(
     variables = c("All variables",
                   "Without codependencies",
-                  "Without codependencies and uniform variables"),
+                  "Without codependencies and uniform variables",
+                  "Highest mutual information"),
     scatter_ratio = c(scatter_ratio_all,
-                        scatter_ratio_drop_codep,
-                        scatter_ratio_drop_codep_unif)
+                      scatter_ratio_drop_codep,
+                      scatter_ratio_drop_codep_unif,
+                      scatter_ratio_mut_info)
   ),
   colnames = c("Variables included", "Scatter ratio")
 )
 ```
 
-We find that removing variables slightly lowers the linear separability of the data, but in general the values are comparable. Based on the plots, we can conclude that it is not possible to achieve a high degree of linear separability between the signal and background events, indicating that a feature transform is most likely appropriate.
+We find that removing variables slightly lowers the linear separability of the data, but in general the values are comparable. Using only the 10 variables with the highest mutual information, however, yields a lower scatter ratio. Based on the plots, we can conclude that it is not possible to achieve a high degree of linear separability between the signal and background events, indicating that a feature transform is most likely appropriate.
 
 # Principle Component Analysis
 
@@ -267,11 +281,7 @@ datatable(
 )
 ```
 
-Based on these results, along with the results of FDA indicating that the dataset is not linearly separable, we moved forward using a radial kernel. We performed 5-fold cross-validation over the 20% training set to tune the two hyperparameters using a grid search: cost and $\gamma$ (bandwidth). We allowed cost to take on the values 0.5, 1, and 2 and $\gamma$ to take on the values 0.01, 0.1, and 0.5.
-
-# Logistic Regression
-
-## Implementation over two variables
+Based on these results, along with the results of FDA indicating that the dataset is not linearly separable, we moved forward using a radial kernel. We performed 5-fold cross-validation over the 20% training set to tune the two hyperparameters using a grid search: cost and $\gamma$ (bandwidth). We allowed cost to take on the values 0.5, 1, and 2 and $\gamma$ to take on the values 0.01, 0.1, and 0.5. Tuning was performed using our function `ams_tune_parallel`, which modifies the `e1071::tune` function to maximise AMS and to conduct cross-validation in parallel, dramatically improving the performance of tuning compared to the original package.
 
 # Appendix
 
