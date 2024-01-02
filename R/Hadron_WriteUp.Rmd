@@ -157,14 +157,9 @@ Note that the data for these plots the variables have `NA` instead of `-999` for
 
 -   We can see that the Jet-related variables have clear variation between the classes, reinforcing our need to use them and their corresponding `-999` values.
 
-## The Mutual Information between $b$ and $s$ for uniform variables
+## The Mutual Information between $b$ and $s$
 
-While plots are very pretty, we must have a justifiable mathematical result to validate any variable removal. To formalize the idea of two distributions being 'the same' when we switch from $b$ to $s$: we use the Mutual Information.
-
-Recall that the mutual information between two random variables is a positive definite, symmetric measure of distance between two distributions defined as follows: $$
-I(X,Y) = D_{KL}(p_{XY} \mid \mid p_Xp_Y)$$
-
-where $D_{KL}$ is the KL- divergence. The mutual information has the property that $I(X,Y) = 0$ if and only if $X$ and $Y$ are independent. This is great for our purposes as if we have some variable $V$ and \$I(V\mid y = b, V\mid y = s) \approx 0 \$ then we can conclude this variable has little impact on classification and can be removed.
+While plots are very pretty, we must have a justifiable mathematical result to validate any variable selection. Below we plot the mutual information between $V \mid y='s'$ and $V \mid y= 'b'$ respectively.
 
 Below we plot the joint and product distributions for `SOME_VARIABLE` as a visual aid to how the mutual information is computed.
 
