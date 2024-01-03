@@ -39,27 +39,27 @@ approx_median_sig(predictions = fitted_svm_radial_all,
 # Tuning SVMs ------------------------------------------------------------------
 #### All variables ####
 # Radial kernel
-tictoc::tic()
-svm_radial_tune <- ams_tune_svm_parallel(svm,
-                                         Label ~ .,
-                                         data = higgs_training_20,
-                                         kernel = "radial",
-                                         cross = 5,
-                                         training_data_weights = training_weights_20,
-                                         ranges = list(
-                                           cost = c(0.5, 1, 2),
-                                           gamma = c(0.01, 0.1, 0.5)
-                                         )
-)
-tictoc::toc() # takes 3.8 hours for just gamma, 7.5 hours for gamma and cost
+# tictoc::tic()
+# svm_radial_tune <- ams_tune_svm_parallel(svm,
+#                                          Label ~ .,
+#                                          data = higgs_training_20,
+#                                          kernel = "radial",
+#                                          cross = 5,
+#                                          training_data_weights = training_weights_20,
+#                                          ranges = list(
+#                                            cost = c(0.5, 1, 2),
+#                                            gamma = c(0.01, 0.1, 0.5)
+#                                          )
+# )
+# tictoc::toc() # takes 3.8 hours for just gamma, 7.5 hours for gamma and cost
 # saveRDS(svm_radial_tune, here("output/svm_radial_tune_20_gc.RDS")) # save object since it takes a long time to make
-# svm_radial_tune <- readRDS(here("output/svm_radial_tune_20.RDS"))
-svm_radial_tune$best.parameters # gamma = 0.1, cost = 1
-tictoc::tic()
-fitted_tuned_svm_radial_all <- predict(svm_radial_tune$best.model, higgs_testing_20)
-tictoc::toc() # 25 minutes
+# svm_radial_tune <- readRDS(here("output/svm_radial_tune_20_gc.RDS"))
+# svm_radial_tune$best.parameters # gamma = 0.1, cost = 1
+# tictoc::tic()
+# fitted_tuned_svm_radial_all <- predict(svm_radial_tune$best.model, higgs_testing_20)
+# tictoc::toc() # 25 minutes
 # saveRDS(fitted_tuned_svm_radial_all, here("output/fitted_tuned_svm_radial_all_20.RDS")) # save object since it takes a long time to make
-# fitted_svm_linear_all <- readRDS("output/fitted_svm_linear_all.RDS")
+# fitted_tuned_svm_radial_all <- readRDS("output/fitted_tuned_svm_radial_all_20.RDS")
 
 # Calculate AMS
 approx_median_sig(predictions = fitted_tuned_svm_radial_all,
@@ -76,24 +76,51 @@ svm_radial_tune_drop_codep_unif <- ams_tune_svm_parallel(svm,
                                                          cross = 5,
                                                          training_data_weights = training_weights_20,
                                                          ranges = list(
-                                                           # cost = c(0.5, 1, 2),
+                                                           cost = c(0.5, 1, 2),
                                                            gamma = c(0.01, 0.1, 0.5)
                                                          )
 )
-tictoc::toc() # 14 hours for some reason
-# saveRDS(svm_radial_tune_drop_codep_unif, here("output/svm_radial_tune_drop_codep_unif_20.RDS")) # save object since it takes a long time to make
-# svm_radial_tune_drop_codep_unif <- readRDS(here("output/svm_radial_tune_drop_codep_unif_20.RDS"))
-svm_radial_tune_drop_codep_unif$best.parameters # gamma = 0.1
+tictoc::toc() # 4.2 hours for cost and gamma
+# saveRDS(svm_radial_tune_drop_codep_unif, here("output/svm_radial_tune_drop_codep_unif_20_gc.RDS")) # save object since it takes a long time to make
+# svm_radial_tune_drop_codep_unif <- readRDS(here("output/svm_radial_tune_drop_codep_unif_20_gc.RDS"))
+svm_radial_tune_drop_codep_unif$best.parameters # gamma = 0.1, cost = 2
 tictoc::tic()
 fitted_tuned_svm_radial_drop_codep_unif <- predict(svm_radial_tune_drop_codep_unif$best.model, higgs_testing_20_drop_codep_unif)
 tictoc::toc() # 18 minutes
-# saveRDS(fitted_tuned_svm_radial_drop_codep_unif, here("output/fitted_tuned_svm_radial_drop_codep_unif_20.RDS")) # save object since it takes a long time to make
-# fitted_svm_linear_all <- readRDS("output/fitted_svm_linear_all.RDS")
+# saveRDS(fitted_tuned_svm_radial_drop_codep_unif, here("output/fitted_tuned_svm_radial_drop_codep_unif_20_gc.RDS")) # save object since it takes a long time to make
+# fitted_tuned_svm_radial_drop_codep_unif <- readRDS("output/fitted_tuned_svm_radial_drop_codep_unif_20_gc.RDS")
 
 # Calculate AMS
 approx_median_sig(predictions = fitted_tuned_svm_radial_drop_codep_unif,
                   labels = higgs_testing_20$Label,
                   weights = testing_weights_20)
-# 2.851
+# 2.856642
 
 #### Top 10 mutual information ####
+tictoc::tic()
+svm_radial_tune_mut_info <- ams_tune_svm_parallel(svm,
+                                                  Label ~ .,
+                                                  data = higgs_training_20_mut_info,
+                                                  kernel = "radial",
+                                                  cross = 5,
+                                                  training_data_weights = training_weights_20,
+                                                  ranges = list(
+                                                    cost = c(0.5, 1, 2),
+                                                    gamma = c(0.01, 0.1, 0.5)
+                                                  )
+)
+tictoc::toc() # 2.5 hours
+# saveRDS(svm_radial_tune_mut_info, here("output/svm_radial_tune_mut_info_20.RDS")) # save object since it takes a long time to make
+# svm_radial_tune_mut_info <- readRDS(here("output/svm_radial_tune_mut_info_20.RDS"))
+svm_radial_tune_mut_info$best.parameters # gamma = 0.5, cost = 2
+tictoc::tic()
+fitted_tuned_svm_radial_mut_info <- predict(svm_radial_tune_mut_info$best.model, higgs_testing_20_mut_info)
+tictoc::toc() # 10 minutes
+# saveRDS(fitted_tuned_svm_radial_mut_info, here("output/fitted_tuned_svm_radial_mut_info_20.RDS")) # save object since it takes a long time to make
+# fitted_tuned_svm_radial_mut_info <- readRDS(here("output/fitted_tuned_svm_radial_mut_info_20.RDS"))
+
+# Calculate AMS
+approx_median_sig(predictions = fitted_tuned_svm_radial_mut_info,
+                  labels = higgs_testing_20$Label,
+                  weights = testing_weights_20)
+# 2.76

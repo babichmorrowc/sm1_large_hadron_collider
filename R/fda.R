@@ -28,7 +28,7 @@ higgs_vars_drop_codep_unif_matrix <- higgs_vars_drop_codep_unif %>%
 
 #### Highest mutual information ####
 # Finally, use the variables with the top 10 highest mutual information
-mut_info_vars <- c('PRI_met_phi', 'DER_pt_tot', 'PRI_tau_pt', 'PRI_lep_pt', 'PRI_met', 'DER_mass_vis', 'DER_mass_transverse_met_lep', 'DER_pt_h', 'DER_sum_pt', 'PRI_met_sumet')
+mut_info_vars <- c('DER_mass_MMC', 'DER_pt_tot', 'PRI_tau_pt', 'PRI_lep_pt', 'PRI_met', 'DER_mass_vis', 'DER_mass_transverse_met_lep', 'DER_pt_h', 'DER_sum_pt', 'PRI_met_sumet')
 higgs_vars_mut_info <- higgs_vars %>% 
   select(all_of(mut_info_vars),
          Label)
@@ -50,10 +50,6 @@ fisher_discrim_higgs_vars_all <- cbind(
   dplyr::select(higgs_vars, Label)
 )
 
-# ggplot() +
-#   geom_histogram(aes(x = fisher_discrim_all_pred, y = stat(density), fill = Label),
-#                  data = fisher_discrim_higgs_vars_all)
-
 #### Drop algebraic co-dependencies ####
 fisher_discrim_drop_codep <- fisher_discrim(higgs_vars_drop_codep, class_pos = "s", class_neg = "b")
 fisher_discrim_drop_codep_pred <- apply(higgs_vars_drop_codep_matrix, 1, function(x) sum(x*fisher_discrim_drop_codep))
@@ -65,11 +61,6 @@ fisher_discrim_higgs_vars_drop_codep <- cbind(
   dplyr::select(higgs_vars, Label)
 )
 
-# ggplot() +
-#   geom_histogram(aes(x = fisher_discrim_drop_codep_pred, y = stat(density), fill = Label),
-#                  data = fisher_discrim_higgs_vars_drop_codep)
-
-
 #### Drop uniform variables ####
 fisher_discrim_drop_codep_unif <- fisher_discrim(higgs_vars_drop_codep_unif, class_pos = "s", class_neg = "b")
 fisher_discrim_drop_codep_unif_pred <- apply(higgs_vars_drop_codep_unif_matrix, 1, function(x) sum(x*fisher_discrim_drop_codep_unif))
@@ -80,10 +71,6 @@ fisher_discrim_higgs_vars_drop_codep_unif <- cbind(
   fisher_discrim_drop_codep_unif_pred,
   dplyr::select(higgs_vars, Label)
 )
-
-# ggplot() +
-#   geom_histogram(aes(x = fisher_discrim_drop_codep_unif_pred, y = stat(density), fill = Label),
-#                  data = fisher_discrim_higgs_vars_drop_codep_unif)
 
 #### Highest mutual information ####
 fisher_discrim_mut_info <- fisher_discrim(higgs_vars_mut_info, class_pos = "s", class_neg = "b")
