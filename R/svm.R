@@ -124,3 +124,27 @@ approx_median_sig(predictions = fitted_tuned_svm_radial_mut_info,
                   labels = higgs_testing_20$Label,
                   weights = testing_weights_20)
 # 2.76
+
+# Combine best parameters ------------------------------------------------------
+# SVM using all variables:
+svm_radial_tune_all <- readRDS(here("output/svm_radial_tune_20_gc.RDS"))
+svm_radial_tune_all$best.parameters
+
+# SVM without co-dependencies and uniform variables
+svm_radial_tune_drop_codep_unif <- readRDS(here("output/svm_radial_tune_drop_codep_unif_20_gc.RDS"))
+svm_radial_tune_drop_codep_unif$best.parameters
+
+# SVM using top 10 mutual information
+svm_radial_tune_mut_info <- readRDS(here("output/svm_radial_tune_mut_info_20.RDS"))
+svm_radial_tune_mut_info$best.parameters
+
+tune_params <- rbind(svm_radial_tune_all$best.parameters,
+                     svm_radial_tune_drop_codep_unif$best.parameters,
+                     svm_radial_tune_mut_info$best.parameters) %>% 
+  mutate(vars = c("All variables",
+                  "Without co-dependencies and uniform variables",
+                  "Highest mutual information")) %>% 
+  select(vars,
+         cost,
+         gamma)
+saveRDS(tune_params, here("output/tune_params.RDS"))

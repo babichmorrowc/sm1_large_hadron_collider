@@ -281,17 +281,13 @@ Based on these results, along with the results of FDA indicating that the datase
 Below are the results of the hyperparameter tuning using the three sets of variables: 1) Including all variables; 2) Removing the algebraic co-dependencies and uniformly distributed variables; 3) Using only the 10 variables with the highest mutual information.
 
 ```{r}
-# SVM using all variables:
-svm_radial_tune_all <- readRDS(here("output/svm_radial_tune_20_gc.RDS"))
-svm_radial_tune_all$best.parameters
-
-# SVM without co-dependencies and uniform variables
-svm_radial_tune_drop_codep_unif <- readRDS(here("output/svm_radial_tune_drop_codep_unif_20_gc.RDS"))
-svm_radial_tune_drop_codep_unif$best.parameters
-
-# SVM using top 10 mutual information
-svm_radial_tune_mut_info <- readRDS(here("output/svm_radial_tune_mut_info_20.RDS"))
-svm_radial_tune_mut_info$best.parameters
+tune_params <- readRDS(here("output/tune_params.RDS"))
+datatable(
+  tune_params,
+  colnames = c("Variables included",
+               "Cost",
+               "Gamma")
+)
 ```
 
 We then used the model using the best hyperparameter values from tuning to find the AMS value on the 80% testing dataset.
