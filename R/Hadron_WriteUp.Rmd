@@ -17,7 +17,6 @@ library(ggplot2)
 library(purrr)
 library(ggpubr) #for ggarrange
 library(DT) #datatables
-library(tfprobability) #kldivergence package
 library(cowplot)
 ```
 
@@ -26,27 +25,6 @@ source(here("R/clean_data.R"))
 summary_OfHiggs <- skim(higgs_data_na)
 ```
 
-#The Objective
-
-Our data set consists of observations from the Large Hadron Collider at CERN over the year of 2012. It is ordered data of the form $\{(\mathbf{x}_i,y_i,w_i)\}_{i \in D}$ where $\mathbf{x} \in \mathbb{R}^{30}$; $y \in \{\mathbf{b},\mathbf{s}\}$ and $w \in [0,1]$ is a weight which measures the intensity of each data point.
-
-Each $\mathbf{x}_i$ is the collection of observables about each event and each $y_i$ is the categorization of the event as either 'Background' $(= \mathbf{b})$ and 'Signal' $=(\mathbf{s})$. We define $$
-\mathcal{S} = \{i: y_i = \mathbf{s}\} \text{ and } \mathcal{B} = \{i: y_i  =\mathbf{b}\}
-$$ with $n_s = \mid \mathcal{S} \mid$ and $n_b = \mid \mathcal{B} \mid$ respectively. The weight variable is not to be used to train the classifier $f$ in any way, it is only to compute the AMS, which is our measure of the accuracy of our classifier $f$. Speaking of $f$, we define $\hat{f} = \{i: f(\mathbf{x}_i) = \mathbf{s}\}$, i.e the points labelled as signals by $f$ and using this we define
-
-$$
-s = \sum_{i \in \mathcal{S}\cap \hat{f}}w_i \text{ and }  b = \sum_{i \in \mathcal{B}\cap \hat{f}}w_i
-$$
-
-i.e $s$ and $b$ are the weighted $\textit{true positives}$ and $\textit{false positives}$ respectively. Finally we define the AMS function is defined as follows:
-
-$$
-\text{AMS}(f) = \sqrt{2\left(s+b+b_{reg}\ln \left (1+ \frac{s}{b+b_{reg}} \right) -s  \right)}
-$$
-
-Where $b$ and $s$ are as above and $b_{reg}$ is a normalizing constant. Notice that this is computed over a data set $D$, so if we wish to compute this over some training or test set we must re-normalize the weights.
-
-Our task is to create some classifier $f$ which maximizes the AMS.
 
 # The Method
 
@@ -130,13 +108,13 @@ df <- datatable(data.frame(missing_GivenS,missing_GivenB,missing_GivenB-missing_
 df
 ```
 
-Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. This means that in both the `DER_mass_MMC` and jet-variables cases, the amount of missing data is indicative of a classification. Meaning that including `-999` (or some other extreme value) can help with classification.
+Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. This means that in both the `DER_mass_MMC` and jet-variables cases, the amount of missing data is indicative of a classification. Meaning that including `-999` (or some other extreme value) can help with classification and will not be removed.
 
-# Variable Analysis
+# Variable Selection
 
 ## The Distributions
 
-To get an understanding of the behavior of variable given their classification, we plotted their densities. The entire list can be found in the appendix but here are a few of note:
+To get an understanding of the behavior of variable given their classification, we split each variable into whether each output was assigned $y=b$ or $y=s$ respectively. The entire list can be found in the appendix but here are a few of note:
 
 ```{r, warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height= 10}
 source(here("R/variable_plots.R"))
@@ -147,29 +125,26 @@ plot_sample_densities
 
 Note that the data for these plots the variables have `NA` instead of `-999` for missing data, again see appendix for plots with `-999` included. Some key takeaways from these plots are:
 
--   Many of our parameters are over the range $[-\pi,\pi]$ as they correspond to the angles observed in interactions.
+-   Many of our parameters are over the range $[-\pi,\pi]$ as they correspond to the angles in which detections are made.
 
--   We see that some these angle variables: `PRI_tau_phi`,`PRI_lep_phi`, `PRI_met_phi`,`PRI_jet_leading_phi`and `PRI_jet_subleading_phi` are uniformly distributed and that there is very little variation between the classifications. Additionally all except `PRI_jet_subleading_phi` are unaffected when we include the `-999` values. This leads us to consider rejecting them from our classification, reducing the dimension by up to 5.
+-   We see that some these angle variables: `PRI_tau_phi`,`PRI_lep_phi`, `PRI_met_phi`,`PRI_jet_leading_phi`and `PRI_jet_subleading_phi` are approximately uniformly distributed and that there is very little variation between the classifications. Additionally all except `PRI_jet_subleading_phi` are unaffected when we include the `-999` values.
 
--   The parameters `PRI_tau_eta` and `PRI_lep_eta` have exotic distributions which vary with $b$ and $s$
+-   We have many `single peak` distributions, some of which have clear translations in their peaks: `DER_mass_MMC`,`DER_mass_transverse_met_lep`,`DER_mass_vis`,`PRI_met_sumet` and `DER_pt_ratio_lep_tau`.
 
--   We have many `single peak` distributions such as `DER_mass_MMC`,`DER_mass_transverse_met_lep` and `DER_pt_ratio_lep_tau` which have clear variation between the classes.
+-   We can see that many Jet-related variables are dominated by their `-999` values.
 
--   We can see that the Jet-related variables have clear variation between the classes, reinforcing our need to use them and their corresponding `-999` values.
-
+Looking at these plots, there are a few contenders for important variables for classification. The distributions with translated peaks are good examples of this. Additionally the angle variables which are largely uniform are likely to only constribute noise and not help with classification. Before we decide on our preferences of variables, we employ an information theoretic technique to measure variation between the two distributions: The Mutual Information.
 ## The Mutual Information between $b$ and $s$
 
-While plots are very pretty, we must have a justifiable mathematical result to validate any variable selection. Below we plot the mutual information between $V \mid y='s'$ and $V \mid y= 'b'$ respectively.
+Below we compute the mutual information between $V \mid y=s$ and $V \mid y= b$, which we denote $V_s$ and $V_b$ respectively.
 
 Below we plot the joint and product distributions for `SOME_VARIABLE` as a visual aid to how the mutual information is computed.
 
-```{r,echo = FALSE, warning=FALSE,message = FALSE}
+```{r,include = FALSE, echo = FALSE, warning=FALSE,message = FALSE}
 joint_density_plots <- lapply(cols_ToPlot,plots_pairwise)
 plot_sample_joint_densities <- ggarrange(plotlist = joint_density_plots,ncol = 2, nrow = 2, align = "v", common.legend = TRUE)
 plot_sample_joint_densities
 ```
-
-As you can see for `GOOD_EXAMPLE` we can see a large variation between the joint and product distributions, whereas with `BAD_EXAMP` we have almost identical distributions.
 
 Below we display the mutual information of all of our variables.
 
@@ -184,11 +159,20 @@ dt <- datatable(MI_Data2_Ordered,col =c("Variable","Mutual Information"),
 dt
 ```
 
+These results justify many of our direct observations from plotting the densities:
+- The variables with distinct peaks (`DER_mass_MMC`,`DER_mass_transverse_met_lep`,`DER_mass_vis`,`PRI_met_sumet` and `DER_pt_ratio_lep_tau`) had very high mutual information. Backing up our intuition for using them in classification.
+- Surprisingly many of the jet-variables still had very low mutual information, even lower than the uniform angle variables.
+
+## Principle Component Analysis
+
+## Conclusions on Variable Selection
+
 # Fisher Discriminant Analysis
 
 FDA creates an embedding that tells us how linearly separated our data can possibly be by maximizing between class scatterness and minimizing within class scatterness. This can be a useful aid to find out whether a linear classifier is appropriate and can additionally be used to see how removing variables affects the separability of our data.
 
-We consider four increasing cases of variables elimination: 1) Including all variables; 2) Removing all 4 algebraic co-dependencies; 3) Removing the above and any uniform variables; 4) Removing the above and the 10 variables with lowest mutual information. The following plots show the results of the FDA embedding for each of these cases.
+We consider four increasing cases of variables elimination: 
+1) Including all variables; 2) Removing all 4 algebraic co-dependencies; 3) Removing the above and any uniform variables; 4) Removing the above and the 10 variables with lowest mutual information. The following plots show the results of the FDA embedding for each of these cases.
 
 ```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.width = 14,fig.height= 5}
 source(here("R/fda.R"))
@@ -226,7 +210,6 @@ datatable(
 
 We find that removing variables slightly lowers the linear separability of the data, but in general the values are comparable. Based on the plots, we can conclude that it is not possible to achieve a high degree of linear separability between the signal and background events, indicating that a feature transform is most likely appropriate.
 
-# Principle Component Analysis
 
 # Support Vector Machine
 

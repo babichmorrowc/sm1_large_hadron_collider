@@ -22,5 +22,5 @@ header <- names(higgs_vars[0:30])
 MIData2 <- data.frame(names = header, data = as.vector(unlist(sapply(header,Mutual_Information))))
 MI_Data2_Ordered <- MIData2[order(MIData2$data),]
 head(MI_Data2_Ordered,n= 10) #these are the lowest mutual information scoring variables
-#MI_Data2_Ordered this is the whole set, i use this in the rmd file
+MI_Data2_Ordered 
 

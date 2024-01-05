@@ -5,8 +5,6 @@ library(ggplot2)
 library(purrr)
 library(ggpubr) #for ggarrange
 library(DT) #datatables
-library(tfprobability)
-library(viridis)
 
 source(here("R/clean_data.R"))
 
