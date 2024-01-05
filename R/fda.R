@@ -26,8 +26,17 @@ higgs_vars_drop_codep_unif_matrix <- higgs_vars_drop_codep_unif %>%
   select(-Label) %>% 
   as.matrix()
 
-#### Drop lowest mutual information ####
-# Finally, drop the variables with the top 10 lowest mutual information
+#### Highest mutual information ####
+# Finally, use the variables with the top 10 highest mutual information
+mut_info_vars <- c('DER_mass_MMC', 'DER_pt_tot', 'PRI_tau_pt', 'PRI_lep_pt', 'PRI_met', 'DER_mass_vis', 'DER_mass_transverse_met_lep', 'DER_pt_h', 'DER_sum_pt', 'PRI_met_sumet')
+higgs_vars_mut_info <- higgs_vars %>% 
+  select(all_of(mut_info_vars),
+         Label)
+
+# Make matrix of predictor variables
+higgs_vars_mut_info_matrix <- higgs_vars_mut_info %>% 
+  select(-Label) %>% 
+  as.matrix()
 
 # Use fisher_discrim function --------------------------------------------------
 #### With all variables ####
@@ -41,10 +50,6 @@ fisher_discrim_higgs_vars_all <- cbind(
   dplyr::select(higgs_vars, Label)
 )
 
-# ggplot() +
-#   geom_histogram(aes(x = fisher_discrim_all_pred, y = stat(density), fill = Label),
-#                  data = fisher_discrim_higgs_vars_all)
-
 #### Drop algebraic co-dependencies ####
 fisher_discrim_drop_codep <- fisher_discrim(higgs_vars_drop_codep, class_pos = "s", class_neg = "b")
 fisher_discrim_drop_codep_pred <- apply(higgs_vars_drop_codep_matrix, 1, function(x) sum(x*fisher_discrim_drop_codep))
@@ -55,11 +60,6 @@ fisher_discrim_higgs_vars_drop_codep <- cbind(
   fisher_discrim_drop_codep_pred,
   dplyr::select(higgs_vars, Label)
 )
-
-# ggplot() +
-#   geom_histogram(aes(x = fisher_discrim_drop_codep_pred, y = stat(density), fill = Label),
-#                  data = fisher_discrim_higgs_vars_drop_codep)
-
 
 #### Drop uniform variables ####
 fisher_discrim_drop_codep_unif <- fisher_discrim(higgs_vars_drop_codep_unif, class_pos = "s", class_neg = "b")
@@ -72,64 +72,13 @@ fisher_discrim_higgs_vars_drop_codep_unif <- cbind(
   dplyr::select(higgs_vars, Label)
 )
 
-# ggplot() +
-#   geom_histogram(aes(x = fisher_discrim_drop_codep_unif_pred, y = stat(density), fill = Label),
-#                  data = fisher_discrim_higgs_vars_drop_codep_unif)
+#### Highest mutual information ####
+fisher_discrim_mut_info <- fisher_discrim(higgs_vars_mut_info, class_pos = "s", class_neg = "b")
+fisher_discrim_mut_info_pred <- apply(higgs_vars_mut_info_matrix, 1, function(x) sum(x*fisher_discrim_mut_info))
+scatter_ratio_mut_info <- scatter_ratio(higgs_vars_mut_info, class_pos = "s", class_neg = "b", w = fisher_discrim_mut_info)
 
-#### Drop lowest mutual information ####
-
-# Use lda function -------------------------------------------------------------
-#### All variables ####
-# using the original data with -999 values and all variables
-# fda_all <- MASS::lda(Label ~ ., higgs_vars)
-# # Getting:
-# # Warning message:
-# #   In lda.default(x, grouping, ...) : variables are collinear
-# # fda_all
-# scatter_ratio(higgs_vars, class_pos = "s", class_neg = "b", w = fda_all$scaling)
-# fda_all_pred <- predict(fda_all, higgs_vars)
-# # ldahist(data = fda_all_pred$x[,1], g = higgs_vars$Label) # not a lot of separation
-# 
-# # Create scaled dataframe for ggplot
-# higgs_vars_all_pred_scaled <- cbind(
-#   fda_all_pred$x,
-#   dplyr::select(higgs_vars, Label)
-# )
-# 
-# #### Drop uniform variables ####
-# fda_drop_unif <- MASS::lda(Label ~ ., higgs_vars_drop_unif)
-# # Getting:
-# # Warning message:
-# #   In lda.default(x, grouping, ...) : variables are collinear
-# # fda_drop_unif
-# 
-# fda_drop_unif_pred <- predict(fda_drop_unif, higgs_vars_drop_unif)
-# # ldahist(data = fda_drop_unif_pred$x[,1], g = higgs_vars_drop_unif$Label) # basically the same
-# 
-# # Create scaled dataframe for ggplot
-# higgs_vars_drop_unif_pred_scaled <- cbind(
-#   fda_drop_unif_pred$x,
-#   dplyr::select(higgs_vars, Label)
-# )
-# 
-# #### Drop uniform + combo variables ####
-# fda_drop_combo <- MASS::lda(Label ~ ., higgs_vars_drop_codep_unif)
-# # No more warning message!
-# # fda_drop_combo
-# scatter_ratio(higgs_vars_drop_codep_unif, class_pos = "s", class_neg = "b", w = fda_drop_combo$scaling)
-# fda_drop_combo_pred <- predict(fda_drop_combo, higgs_vars_drop_combo)
-# # ldahist(data = fda_drop_combo_pred$x[,1], g = higgs_vars_drop_combo$Label) # basically the same
-# 
-# # Create scaled dataframe for ggplot
-# higgs_vars_drop_combo_pred_scaled <- cbind(
-#   fda_drop_combo_pred$x,
-#   dplyr::select(higgs_vars, Label)
-# )
-
-# Use lfda function ------------------------------------------------------------
-# Won't run:
-# lfda_drop_codep <- lfda(x = higgs_vars_drop_codep[,-27], y = higgs_vars_drop_codep$Label, r = 2)
-# Error: cannot allocate vector of size 582.3 Gb
-
-# kern_mat <- kmatrixGauss(higgs_training_drop_codep[, -27])
-
+# Create scaled dataframe for ggplot
+fisher_discrim_higgs_vars_mut_info <- cbind(
+  fisher_discrim_mut_info_pred,
+  dplyr::select(higgs_vars, Label)
+)
