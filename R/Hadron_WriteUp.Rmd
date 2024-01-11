@@ -92,7 +92,7 @@ The above result can be found in the handbook for the variables provided with th
 
 ## Impact of the Missing Data
 
-Despite understanding the cause of (most of) our missing data, we still don't know the impact, the following section is dedicated to understanding the correlation between the missing data from each variable and its classification. Take `DER_mass_MMC` for example, if we find that the missing data is distributed uniformly across $y_i \in \{b,s\}$ then the appearance of `NA` has no impact on classification, however if it is disproportionately skewed towards $b$ then we can use this to assist our classification.
+Despite understanding the cause of (most of) our missing data, we still don't know the impactof it, the following section is dedicated to understanding the correlation between the missing data from each variable and its classification.
 
 Below we compute the percentage of `NA` data in Background and Signal respectively. If this missing data is distributed uniformly across Background and Signal then the percentages should be very close.
 
@@ -110,7 +110,7 @@ df <- datatable(data.frame(missing_GivenS,missing_GivenB,missing_GivenB-missing_
 df
 ```
 
-Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. This means that in both the `DER_mass_MMC` and jet-variables cases, the amount of missing data is indicative of a classification. Meaning that including `-999` (or some other extreme value) can help with classification and will not be removed.
+Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. This means that in both the `DER_mass_MMC` and jet-variables cases, the amount of missing data is indicative of a classification. Meaning that including `-999` can help with classification and will not be removed.
 
 # Variable Selection
 
