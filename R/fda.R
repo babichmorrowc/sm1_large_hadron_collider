@@ -28,7 +28,19 @@ higgs_vars_drop_codep_unif_matrix <- higgs_vars_drop_codep_unif %>%
 
 #### Highest mutual information ####
 # Finally, use the variables with the top 10 highest mutual information
-mut_info_vars <- c('DER_mass_MMC', 'DER_pt_tot', 'PRI_tau_pt', 'PRI_lep_pt', 'PRI_met', 'DER_mass_vis', 'DER_mass_transverse_met_lep', 'DER_pt_h', 'DER_sum_pt', 'PRI_met_sumet')
+mut_info_vars <-
+  c(
+    'DER_mass_MMC',
+    'DER_mass_transverse_met_lep',
+    'DER_mass_vis',
+    'PRI_tau_pt',
+    'DER_met_phi_centrality',
+    'DER_pt_ratio_lep_tau',
+    'DER_sum_pt',
+    'DER_pt_h',
+    'DER_deltaeta_jet_jet',
+    'DER_mass_jet_jet'
+  )
 higgs_vars_mut_info <- higgs_vars %>% 
   select(all_of(mut_info_vars),
          Label)

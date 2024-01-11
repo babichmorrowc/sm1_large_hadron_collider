@@ -180,17 +180,28 @@ source(here("R/fda.R"))
 FDA_all <- ggplot() +
   geom_histogram(aes(x = fisher_discrim_all_pred, y = stat(density), fill = Label),
                  data = fisher_discrim_higgs_vars_all) +
-  ggtitle("FDA with all variables")
+  labs(x = expression(w^T * x)) +
+  ggtitle("FDA with all variables") +
+  theme_bw()
 FDA_codep <- ggplot() +
   geom_histogram(aes(x = fisher_discrim_drop_codep_pred, y = stat(density), fill = Label),
                  data = fisher_discrim_higgs_vars_drop_codep) +
-  ggtitle("FDA without codependencies")
+  labs(x = expression(w^T * x)) +
+  ggtitle("FDA without codependencies") +
+  theme_bw()
 FDA_codep_unif <- ggplot() +
   geom_histogram(aes(x = fisher_discrim_drop_codep_unif_pred, y = stat(density), fill = Label),
                  data = fisher_discrim_higgs_vars_drop_codep_unif) +
-  ggtitle("FDA without codependencies and uniform variables")
-
-plot_grid(FDA_all,FDA_codep,FDA_codep_unif,nrow = 2)
+  labs(x = expression(w^T * x)) +
+  ggtitle("FDA without codependencies and uniform variables") +
+  theme_bw()
+FDA_mut_info <- ggplot() +
+  geom_histogram(aes(x = fisher_discrim_mut_info_pred, y = stat(density), fill = Label),
+                 data = fisher_discrim_higgs_vars_mut_info) +
+  labs(x = expression(w^T * x)) +
+  ggtitle("FDA with highest mutual information") +
+  theme_bw()
+plot_grid(FDA_all,FDA_codep,FDA_codep_unif,FDA_mut_info,nrow = 2)
 ```
 
 For these different FDA embeddings, we can compare the ratio between between class scatterness and within class scatterness:
@@ -200,10 +211,12 @@ datatable(
   data = data.frame(
     variables = c("All variables",
                   "Without codependencies",
-                  "Without codependencies and uniform variables"),
+                  "Without codependencies and uniform variables",
+                  "Highest mutual information"),
     scatter_ratio = c(scatter_ratio_all,
-                        scatter_ratio_drop_codep,
-                        scatter_ratio_drop_codep_unif)
+                      scatter_ratio_drop_codep,
+                      scatter_ratio_drop_codep_unif,
+                      scatter_ratio_mut_info)
   ),
   colnames = c("Variables included", "Scatter ratio")
 )
