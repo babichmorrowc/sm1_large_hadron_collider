@@ -151,10 +151,7 @@ Below we display the mutual information of all of our variables.
 ```{r,echo = FALSE, warning=FALSE,message = FALSE}
 source(here("R/Mutual_Information.R"))
 
-header <- names(higgs_vars[0:30])
-MIData2 <- data.frame(names = header, data = as.vector(unlist(sapply(header,Mutual_Information))))
-MI_Data2_Ordered <- MIData2[order(MIData2$data),]
-dt <- datatable(MI_Data2_Ordered,col =c("Variable","Mutual Information"),
+dt <- datatable(MI_Data_STORED_Ordered,col =c("Variable","Mutual Information"),
                 options = list(pagelength=10))
 dt
 ```
@@ -215,7 +212,7 @@ We find that removing variables slightly lowers the linear separability of the d
 
 We divided our dataset into a training and testing split, training SVMs on the training data and finding the AMS on the testing data.
 
-```{r echo = FALSE}
+```{r echo = FALSE,warning = FALSE}
 source(here("R/training_testing.R"))
 ```
 
@@ -261,14 +258,7 @@ plot_sample_densities <- ggarrange(plotlist = density_plots,ncol = 2, nrow = 15,
 plot_sample_densities
 ```
 
-## Joint Distributions with `NA` entries
-
-```{r,warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height = 35}
-joint_density_plots <- lapply(cols_ToPlot2,plots_pairwise)
-plot_sample_joint_densities <- ggarrange(plotlist = joint_density_plots,ncol = 2, nrow = 15, align = "v", common.legend = TRUE)
-plot_sample_joint_densities
-```
-
+#
 ## Distributions with `-999` entries
 
 ```{r, warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height = 35}
