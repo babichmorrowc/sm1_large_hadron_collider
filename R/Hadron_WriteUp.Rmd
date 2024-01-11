@@ -50,6 +50,8 @@ We have a few types of data to consider:
 
 -   The discrete variable `PRI_jet_num` denotes the amount of jets from each event and takes values in $\{0,1,2,3\}$.
 
+-   We have multiple variables which are the angle of detection for some observation.
+
 -   All other variables are either direct or indirect measurements and are continuous.
 
 ## Co-Dependency of Data
@@ -114,7 +116,7 @@ Notice that `Signal` consistently has $13-18 \%$ less missing data than `Backgro
 
 ## The Distributions
 
-To get an understanding of the behavior of variable given their classification, we split each variable into whether each output was assigned $y=b$ or $y=s$ respectively. The entire list can be found in the appendix but here are a few of note:
+To get an understanding of the behavior of variable given their classification, we condition each variable on whether $y=b$ or $y=s$ respectively. The entire list can be found in the appendix but here are a few of note:
 
 ```{r, warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height= 10}
 source(here("R/variable_plots.R"))
@@ -125,29 +127,20 @@ plot_sample_densities
 
 Note that the data for these plots the variables have `NA` instead of `-999` for missing data, again see appendix for plots with `-999` included. Some key takeaways from these plots are:
 
--   Many of our parameters are over the range $[-\pi,\pi]$ as they correspond to the angles in which detections are made.
+-   We see that some these angle variables: `PRI_tau_phi`,`PRI_lep_phi`, `PRI_met_phi`,`PRI_jet_leading_phi`and `PRI_jet_subleading_phi` are approximately uniformly distributed and that there is very little variation between the classifications.
 
--   We see that some these angle variables: `PRI_tau_phi`,`PRI_lep_phi`, `PRI_met_phi`,`PRI_jet_leading_phi`and `PRI_jet_subleading_phi` are approximately uniformly distributed and that there is very little variation between the classifications. Additionally all except `PRI_jet_subleading_phi` are unaffected when we include the `-999` values.
-
--   We have many `single peak` distributions, some of which have clear translations in their peaks: `DER_mass_MMC`,`DER_mass_transverse_met_lep`,`DER_mass_vis`,`PRI_met_sumet` and `DER_pt_ratio_lep_tau`.
+-   We have many distributions with distinct translations in their peaks: `DER_mass_MMC`,`DER_mass_transverse_met_lep`,`DER_mass_vis`,`PRI_tau_pt` and `DER_pt_ratio_lep_tau`.
 
 -   We can see that many Jet-related variables are dominated by their `-999` values.
 
-Looking at these plots, there are a few contenders for important variables for classification. The distributions with translated peaks are good examples of this. Additionally the angle variables which are largely uniform are likely to only constribute noise and not help with classification. Before we decide on our preferences of variables, we employ an information theoretic technique to measure variation between the two distributions: The Mutual Information.
-## The Mutual Information between $b$ and $s$
+Looking at these plots, there are a few contenders for important variables for classification - the translated peaks are good examples. Additionally the angle variables which are largely uniform are likely to only constribute noise and not help with classification. 
 
-Below we compute the mutual information between $V \mid y=s$ and $V \mid y= b$, which we denote $V_s$ and $V_b$ respectively.
+Before we decide on our preferences of variables, we employ an information theoretic technique to measure the impact of each variable: The Mutual Information.
+## Performing Mutual Information Tests
 
-Below we plot the joint and product distributions for `SOME_VARIABLE` as a visual aid to how the mutual information is computed.
+For each variable $V$ we compute its mutual information with `Label`, variables with high mutual information are better indicators for classification. We hope this will validate our observations from plotting the data.
 
-```{r,include = FALSE, echo = FALSE, warning=FALSE,message = FALSE}
-joint_density_plots <- lapply(cols_ToPlot,plots_pairwise)
-plot_sample_joint_densities <- ggarrange(plotlist = joint_density_plots,ncol = 2, nrow = 2, align = "v", common.legend = TRUE)
-plot_sample_joint_densities
-```
-
-Below we display the mutual information of all of our variables.
-
+Our results are below:
 ```{r,echo = FALSE, warning=FALSE,message = FALSE}
 source(here("R/Mutual_Information.R"))
 
@@ -157,19 +150,30 @@ dt
 ```
 
 These results justify many of our direct observations from plotting the densities:
-- The variables with distinct peaks (`DER_mass_MMC`,`DER_mass_transverse_met_lep`,`DER_mass_vis`,`PRI_met_sumet` and `DER_pt_ratio_lep_tau`) had very high mutual information. Backing up our intuition for using them in classification.
-- Surprisingly many of the jet-variables still had very low mutual information, even lower than the uniform angle variables.
 
+-   The variables with clear translational difference peaks (`DER_mass_MMC`,`DER_mass_transverse_met_lep`,`DER_mass_vis`,`PRI_tau_pt` and `DER_pt_ratio_lep_tau`) had very high mutual information. 
+
+-   Additionally the mostly uniform variables ranked lowest in terms of mutual information.
+
+-   Variables which were around the middle in terms of mutual Information typically had matching peaks but `b` had a higher variance.
 ## Principle Component Analysis
 
 ## Conclusions on Variable Selection
+After considering our multiple ways of ranking these variables, we conclude that we will remove our variables heirarchically in the following order:
+
+1) Including all variables
+
+2) Removing all 4 algebraic co-dependencies (`PRI_jet_leading_pt`,`PRI_jet_subleading_pt`,`DER_pt_ratio_lep_tau`,`PRI_tau_pt`)
+
+3) Removing the above and any uniform variables (`PRI_lep_phi`,`PRI_met_phi`,`PRI_tau_phi`)
+
+4) Only use the top ten highest ranking mutual information variables (see above)
+
+We note that one of our algebraic variables is `PRI_tau_pt`, which is in the top ten ranking - so that will be added back in. 
 
 # Fisher Discriminant Analysis
 
 FDA creates an embedding that tells us how linearly separated our data can possibly be by maximizing between class scatterness and minimizing within class scatterness. This can be a useful aid to find out whether a linear classifier is appropriate and can additionally be used to see how removing variables affects the separability of our data.
-
-We consider four increasing cases of variables elimination: 
-1) Including all variables; 2) Removing all 4 algebraic co-dependencies; 3) Removing the above and any uniform variables; 4) Removing the above and the 10 variables with lowest mutual information. The following plots show the results of the FDA embedding for each of these cases.
 
 ```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.width = 14,fig.height= 5}
 source(here("R/fda.R"))
@@ -244,26 +248,24 @@ datatable(
 
 Based on these results, along with the results of FDA indicating that the dataset is not linearly separable, we moved forward using a radial kernel. We performed 5-fold cross-validation over the 20% training set to tune the two hyperparameters using a grid search: cost and $\gamma$ (bandwidth). We allowed cost to take on the values 0.5, 1, and 2 and $\gamma$ to take on the values 0.01, 0.1, and 0.5.
 
-# Logistic Regression
-
-## Implementation over two variables
+# Implimenting a Support Vector Machine
 
 # Appendix
 
-## Distributions with `NA` entries
 
-```{r, warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height = 35}
-density_plots <- lapply(cols_ToPlot2,plots)
-plot_sample_densities <- ggarrange(plotlist = density_plots,ncol = 2, nrow = 15, align = "v", common.legend = TRUE)
-plot_sample_densities
-```
-
-#
-## Distributions with `-999` entries
+### Distributions with `-999` entries
 
 ```{r, warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height = 35}
 plot_list2 <- lapply(cols_ToPlot3,plots)
 plot_sample_densities_orig <- ggarrange(plotlist = plot_list2,ncol = 2, nrow = 15, align = "v", common.legend = TRUE)
 
 plot_sample_densities_orig
+```
+
+### Distributions with `NA` entries
+
+```{r, warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height = 35}
+density_plots <- lapply(cols_ToPlot2,plots)
+plot_sample_densities <- ggarrange(plotlist = density_plots,ncol = 2, nrow = 15, align = "v", common.legend = TRUE)
+plot_sample_densities
 ```
