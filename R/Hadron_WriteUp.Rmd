@@ -7,8 +7,13 @@ output:
   pdf_document: default
 ---
 
+This RMarkdown document is a companion piece to a Latex document submitted detailing our work on this project. For discussion including references to other works and justification for the techniques and methods used, please refer to that document. This will be an indepth exploration of the statistical results and `R` code only.
+
+Additionally this project comes with a package which contains all external annotated `R` code which can be downloaded via the following command in the `R` console:
+```{r,eval = FALSE}
+devtools::install_github("babichmorrowc/higgiesmalls")
+```
 ```{r include = FALSE}
-# devtools::install_github("babichmorrowc/higgiesmalls") # install our R package if necessary
 library(higgiesmalls)
 library(tidyverse)
 library(here)
@@ -25,18 +30,9 @@ source(here("R/clean_data.R"))
 summary_OfHiggs <- skim(higgs_data_na)
 ```
 
-
-# The Method
-
-As we have $31$-dimensional data we will perform preliminary analysis of the variables before running classification. The following is a loose structure of our method for tackling this problem:
-
-1.  Eliminate any obviously redundant variables such as meta-data.
-2.  Analyse and deal with any missing data.
-3.  Remove variables which have minimal impact on classification.
-4.  Perform a classification algorithm.
-5.  Study the impact on the AMS.
-
 # Preliminary Observations
+
+Our data consists of events detected at the Large Hadron Collider which were classified as either Background (b) or Signal (s) - Signal being a detection of a higgs boson.
 
 ## Types of Data
 
@@ -53,20 +49,6 @@ We have a few types of data to consider:
 -   We have multiple variables which are the angle of detection for some observation.
 
 -   All other variables are either direct or indirect measurements and are continuous.
-
-## Co-Dependency of Data
-
-Since we are classifying, we want to remove any redundancies in our data, fortunately we have the following co-dependencies:
-
--   `PRI_jet_all_pt = PRI_jet_leading_pt + PRI_jet_subleading_pt`
-
--   `PRI_lep_pt = DER_pt_ratio_lep_tau*PRI_tau_pt`
-
--   Jet-related variables depend on `PRI_jet_num` (see next section for more)
-
-We can either remove `PRI_jet_all_pt` or remove both `PRI_jet_leading_pt` and `PRI_jet_subleading_pt` to reduce the dimension by $1$ or $2$. This same idea can be applied to to the other (multiplicative) dependence. With these reductions we could remove up to $4$ dimensions from our data.
-
-If we wish to be more liberal with our removal, we could throw out all jet related variables besides `PRI_jet_num` to remove $10$ more dimensions from our data. However this is assuming that the other jet variables have little impact on classification which has not been validated - yet.
 
 # Missing Data
 
@@ -92,7 +74,7 @@ The above result can be found in the handbook for the variables provided with th
 
 ## Impact of the Missing Data
 
-Despite understanding the cause of (most of) our missing data, we still don't know the impactof it, the following section is dedicated to understanding the correlation between the missing data from each variable and its classification.
+Despite understanding the cause of (most of) our missing data, we still don't know the impact of it, the following section is dedicated to understanding the correlation between the missing data from each variable and its classification.
 
 Below we compute the percentage of `NA` data in Background and Signal respectively. If this missing data is distributed uniformly across Background and Signal then the percentages should be very close.
 
@@ -110,32 +92,48 @@ df <- datatable(data.frame(missing_GivenS,missing_GivenB,missing_GivenB-missing_
 df
 ```
 
-Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. This means that in both the `DER_mass_MMC` and jet-variables cases, the amount of missing data is indicative of a classification. Meaning that including `-999` can help with classification and will not be removed.
+Notice that `Signal` consistently has $13-18 \%$ less missing data than `Background`. Considering the size of our dataset ($\approx 8 \times 10^5) this is statistically significant. This means that in both the `DER_mass_MMC` and jet-variables cases, the amount of missing data is indicative of a classification. Meaning that including `-999` can help with classification and will not be removed.
 
 # Variable Selection
 
-## The Distributions
+## Co-Dependency of Data
+
+We have the following algebraic codependencies:
+
+-   `PRI_jet_all_pt = PRI_jet_leading_pt + PRI_jet_subleading_pt`
+
+-   `PRI_lep_pt = DER_pt_ratio_lep_tau*PRI_tau_pt`
+
+We can either remove `PRI_jet_all_pt` or remove both `PRI_jet_leading_pt` and `PRI_jet_subleading_pt` to reduce the dimension by $1$ or $2$. This same idea can be applied to to the other (multiplicative) dependence. Taking us down to possibly 26 dimensions.
+
+Another 'dependence' is the fact that `PRI_jet_num` characterises the missing data in jet-variables. Meaning we could remove all of these in favour of keeping `PRI_jet_num` however this is very extreme and may produce detrimental effects.
+
+## Density Plots
 
 To get an understanding of the behavior of variable given their classification, we condition each variable on whether $y=b$ or $y=s$ respectively. The entire list can be found in the appendix but here are a few of note:
 
 ```{r, warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height= 10}
 source(here("R/variable_plots.R"))
+
 density_plots <- lapply(cols_ToPlot,plots)
 plot_sample_densities <- ggarrange(plotlist = density_plots,ncol = 2, nrow = 2, align = "v", common.legend = TRUE)
 plot_sample_densities
 ```
 
-Note that the data for these plots the variables have `NA` instead of `-999` for missing data, again see appendix for plots with `-999` included. Some key takeaways from these plots are:
+ Some key takeaways from the density plots are:
 
--   We see that some these angle variables: `PRI_tau_phi`,`PRI_lep_phi`, `PRI_met_phi`,`PRI_jet_leading_phi`and `PRI_jet_subleading_phi` are approximately uniformly distributed and that there is very little variation between the classifications.
+-   We see that some these angle variables: `PRI_tau_phi`, `PRI_lep_phi`, `PRI_met_phi`, `PRI_jet_leading_phi`and `PRI_jet_subleading_phi` are approximately uniformly distributed and that there is very little variation between the classifications.
 
--   We have many distributions with distinct translations in their peaks: `DER_mass_MMC`,`DER_mass_transverse_met_lep`,`DER_mass_vis`,`PRI_tau_pt` and `DER_pt_ratio_lep_tau`.
+-   We have many distributions with distinct translations in their peaks: `DER_mass_MMC`, `DER_mass_transverse_met_lep`, `DER_mass_vis`, `PRI_tau_pt` and `DER_pt_ratio_lep_tau`.
 
--   We can see that many Jet-related variables are dominated by their `-999` values.
+-   Some distributions had higher variance in the background case (see `DER_deltar_tau_lep` or `PRI_tau_eta`), indicating they feel the difference, but may not be as useful for classification.
 
-Looking at these plots, there are a few contenders for important variables for classification - the translated peaks are good examples. Additionally the angle variables which are largely uniform are likely to only constribute noise and not help with classification. 
+-   We can see that many jet-related variables are dominated by their `-999` values, additionally we see that the proportion of `-999` values is higher in the background case - as expected.
+
+Variables with clear translational peaks make great contenders for classification, while jet-variables and ones with higher variance may need some sort of feature transform. We hypothesis that the uniform angle variables only provide noise to the problem and have no bearing on classification at all.
 
 Before we decide on our preferences of variables, we employ an information theoretic technique to measure the impact of each variable: The Mutual Information.
+
 ## Performing Mutual Information Tests
 
 For each variable $V$ we compute its mutual information with `Label`, variables with high mutual information are better indicators for classification. We hope this will validate our observations from plotting the data.
@@ -149,27 +147,27 @@ dt <- datatable(MI_Data_STORED_Ordered,col =c("Variable","Mutual Information"),
 dt
 ```
 
-These results justify many of our direct observations from plotting the densities:
+Thankfully these results justify many of our direct observations from plotting the densities:
 
--   The variables with clear translational difference peaks (`DER_mass_MMC`,`DER_mass_transverse_met_lep`,`DER_mass_vis`,`PRI_tau_pt` and `DER_pt_ratio_lep_tau`) had very high mutual information. 
+-   The variables with clear translational difference  in their peaks (`DER_mass_MMC`,`DER_mass_transverse_met_lep`,`DER_mass_vis`,`PRI_tau_pt` and `DER_pt_ratio_lep_tau`) had very high mutual information. Additionally, `DER_mass_MMC`: the only jet-variable with `-999` values, had the highest mutual information than any other variable, by a significant margin.
 
--   Additionally the mostly uniform variables ranked lowest in terms of mutual information.
+-   Variables which were around the middle in terms of mutual Information were a mixture of higher variance and jet-variables.
 
--   Variables which were around the middle in terms of mutual Information typically had matching peaks but `b` had a higher variance.
-## Principle Component Analysis
+-   The mostly uniform variables ranked lowest in terms of mutual information.
+
 
 ## Conclusions on Variable Selection
-After considering our multiple ways of ranking these variables, we conclude that we will remove our variables heirarchically in the following order:
+After considering our multiple ways of prioritising these variables, we conclude that we will remove our variables heirarchically in the following order:
 
-1) Including all variables
+1) Include all variables
 
-2) Removing all 4 algebraic co-dependencies (`PRI_jet_leading_pt`,`PRI_jet_subleading_pt`,`DER_pt_ratio_lep_tau`,`PRI_tau_pt`)
+2) Remove all 4 algebraic co-dependencies (`PRI_jet_leading_pt`, `PRI_jet_subleading_pt`, `DER_pt_ratio_lep_tau`, `PRI_tau_pt`).
 
-3) Removing the above and any uniform variables (`PRI_lep_phi`,`PRI_met_phi`,`PRI_tau_phi`)
+3) Remove the above and any uniform variables (`PRI_lep_phi`, `PRI_met_phi`, `PRI_tau_phi`).
 
-4) Only use the top ten highest ranking mutual information variables (see above)
+4) Only use the top ten highest ranking mutual information variables (see above).
 
-We note that one of our algebraic variables is `PRI_tau_pt`, which is in the top ten ranking - so that will be added back in. 
+We note that one of our algebraic variables is `PRI_tau_pt`, which is in the top ten ranking - so that will be added back in. This allows us to cover both bases: removing significant algebraic codependence, and including variables which have high mutual information. The final choice is certainly a gamble, and is more an exercise is determining when the diminishing effects of dimension reducation take place.
 
 # Fisher Discriminant Analysis
 
@@ -229,7 +227,7 @@ We find that removing variables slightly lowers the linear separability of the d
 
 We divided our dataset into a training and testing split, training SVMs on the training data and finding the AMS on the testing data.
 
-```{r echo = FALSE, message=FALSE}
+```{r echo = FALSE, message=FALSE,warning = FALSE}
 source(here("R/training_testing.R"))
 ```
 
@@ -263,7 +261,7 @@ Based on these results, along with the results of FDA indicating that the datase
 
 Below are the results of the hyperparameter tuning using the three sets of variables: 1) Including all variables; 2) Removing the algebraic co-dependencies and uniformly distributed variables; 3) Using only the 10 variables with the highest mutual information.
 
-```{r}
+```{r,echo = FALSE}
 tune_params <- readRDS(here("output/tune_params.RDS"))
 datatable(
   tune_params,
@@ -305,22 +303,15 @@ datatable(
 )
 ```
 
+We see in the above data that removing algebraic codependencies and the uniform variables produced the highest AMS when employing an RBF kernel. With using the top ten highest mutual information actually underperforming against using all variables. This is dissapointing, however not particularly surprising as this cut 2/3 of the variables out of the problem.
+
 # Appendix
 
-
-### Distributions with `-999` entries
-
+### Density plots of each variable
+The following are the density plots for our variables, conditioned on whether they are a detection of a higgs boson or not. Note that in the jet-variables and `DER_mass_MMC` we have peaks at `-999` which skew many of the variable plots.
 ```{r, warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height = 35}
 plot_list2 <- lapply(cols_ToPlot3,plots)
 plot_sample_densities_orig <- ggarrange(plotlist = plot_list2,ncol = 2, nrow = 15, align = "v", common.legend = TRUE)
 
 plot_sample_densities_orig
-```
-
-### Distributions with `NA` entries
-
-```{r, warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height = 35}
-density_plots <- lapply(cols_ToPlot2,plots)
-plot_sample_densities <- ggarrange(plotlist = density_plots,ncol = 2, nrow = 15, align = "v", common.legend = TRUE)
-plot_sample_densities
 ```

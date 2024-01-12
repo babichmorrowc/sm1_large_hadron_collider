@@ -14,7 +14,7 @@ source(here("R/clean_data.R"))
 
 plots <- function(Parameter){
   #function takes each variable as input
-  pl <- ggplot(higgs_data_na, aes(x= get(Parameter), fill = Label)) +
+  pl <- ggplot(higgs_data_orig, aes(x= get(Parameter), fill = Label)) +
     #create ggplot with higgs_data_na splitting the data into two categories by using the Label (={b,s}) variable
     geom_density(alpha = 0.5) +
     #choose opacity of plots
@@ -44,20 +44,12 @@ plots_pairwise <- function(P1){
   return(pl)
 }
 
-#|-------------------------------------------------|
-# function which produces the product distribution of var|b and var|s
-plots_product <- function(P1){
-  b_data <- filter(ggplot_build(plots(P1))$data[[1]],fill == "#F8766D")
-  s_data <- filter(ggplot_build(plots(P1))$data[[1]],fill != "#F8766D")
-  print(head(b_data))
-  print(head(s_data))
-}
 
 #|-------------------------------------------------|
 #define which families of variables to plot
-cols_ToPlot <- c(colnames(higgs_data_na)[8:9],colnames(higgs_data_na)[29:30]) #random sample of histograms
-cols_ToPlot2 <- c(colnames(higgs_data_na)[1:30]) #all variables but with na values put in
-cols_ToPlot3 <- c(colnames(higgs_data_orig)[1:30]) #all variables but with -999 values put in
+cols_ToPlot <- c("DER_mass_transverse_met_lep","PRI_tau_phi","DER_prodeta_jet_jet","PRI_tau_eta") #random sample of histograms
+cols_ToPlot2 <- c(colnames(higgs_data_na)[2:30]) #all variables but with na values put in
+cols_ToPlot3 <- c(colnames(higgs_data_orig)[2:30]) #all variables but with -999 values put in
 #LIST OF RELEVANT PLOTS FOR THE RMD FILE
 #|----------------------------------------------------------|
 #SAMPLE PLOTS for variable analysis section
@@ -66,7 +58,7 @@ cols_ToPlot3 <- c(colnames(higgs_data_orig)[1:30]) #all variables but with -999 
 #sample 1D plots
 #density_plots <- lapply(cols_ToPlot,plots)
 #plot_sample_densities <- ggarrange(plotlist = density_plots,ncol = 2, nrow = 2, align = "v", common.legend = TRUE)
-#plot_sample_densities
+#print(plot_sample_densities)
 #|----------------------------|
 #sample 2d histograms
 #joint_density_plots <- lapply(cols_ToPlot,plots_pairwise)
