@@ -225,43 +225,7 @@ datatable(
 We find that removing variables slightly lowers the linear separability of the data, but in general the values are comparable. Based on the plots, we can conclude that it is not possible to achieve a high degree of linear separability between the signal and background events, indicating that a feature transform is most likely appropriate.
 
 
-# Support Vector Machine
-
-We divided our dataset into a training and testing split, training SVMs on the training data and finding the AMS on the testing data.
-
-```{r echo = FALSE,warning = FALSE}
-source(here("R/training_testing.R"))
-```
-
-By training SVMs with a linear kernel vs. a radial kernel on a 20% training set (using all predictor variables), we found that a radial kernel consistently yielded higher AMS:
-
-```{r echo = FALSE}
-fitted_svm_linear_all_20 <- readRDS(here("output/fitted_svm_linear_all_20.RDS"))
-fitted_svm_radial_all_20 <- readRDS(here("output/fitted_svm_radial_all_20.RDS"))
-
-linear_ams_20 <- approx_median_sig(predictions = fitted_svm_linear_all_20,
-                                   labels = higgs_testing_20$Label,
-                                   weights = testing_weights_20)
-radial_ams_20 <- approx_median_sig(predictions = fitted_svm_radial_all_20,
-                                   labels = higgs_testing_20$Label,
-                                   weights = testing_weights_20)
-```
-
-```{r echo = FALSE}
-datatable(
-  data = data.frame(
-    kernel = c("Linear",
-               "Radial"),
-    AMS = c(linear_ams_20,
-            radial_ams_20)
-  ),
-  colnames = c("Kernel", "AMS")
-)
-```
-
-Based on these results, along with the results of FDA indicating that the dataset is not linearly separable, we moved forward using a radial kernel. We performed 5-fold cross-validation over the 20% training set to tune the two hyperparameters using a grid search: cost and $\gamma$ (bandwidth). We allowed cost to take on the values 0.5, 1, and 2 and $\gamma$ to take on the values 0.01, 0.1, and 0.5.
-
-## Support Vector Machine
+# Support Vector Machines
 
 We divided our dataset into a training and testing split, training SVMs on the training data and finding the AMS on the testing data.
 
@@ -314,7 +278,7 @@ We then used the model using the best hyperparameter values from tuning to find 
 ```{r echo = FALSE}
 fitted_tuned_svm_radial_all <- readRDS(here("output/fitted_tuned_svm_radial_all_20.RDS"))
 fitted_tuned_svm_radial_drop_codep_unif <- readRDS(here("output/fitted_tuned_svm_radial_drop_codep_unif_20_gc.RDS"))
-fitted_tuned_svm_radial_mut_info <- readRDS(here("output/fitted_tuned_svm_radial_mut_info_20.RDS"))
+fitted_tuned_svm_radial_mut_info <- readRDS(here("output/fitted_tuned_svm_radial_mut_info_20_2.RDS"))
 
 all_ams <- approx_median_sig(predictions = fitted_tuned_svm_radial_all,
                              labels = higgs_testing_20$Label,

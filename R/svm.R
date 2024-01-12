@@ -110,20 +110,20 @@ svm_radial_tune_mut_info <- ams_tune_svm_parallel(svm,
                                                   )
 )
 tictoc::toc() # 2.5 hours
-# saveRDS(svm_radial_tune_mut_info, here("output/svm_radial_tune_mut_info_20.RDS")) # save object since it takes a long time to make
-# svm_radial_tune_mut_info <- readRDS(here("output/svm_radial_tune_mut_info_20.RDS"))
+# saveRDS(svm_radial_tune_mut_info, here("output/svm_radial_tune_mut_info_20_2.RDS")) # save object since it takes a long time to make
+# svm_radial_tune_mut_info <- readRDS(here("output/svm_radial_tune_mut_info_20_2.RDS"))
 svm_radial_tune_mut_info$best.parameters # gamma = 0.5, cost = 2
 tictoc::tic()
 fitted_tuned_svm_radial_mut_info <- predict(svm_radial_tune_mut_info$best.model, higgs_testing_20_mut_info)
 tictoc::toc() # 10 minutes
-# saveRDS(fitted_tuned_svm_radial_mut_info, here("output/fitted_tuned_svm_radial_mut_info_20.RDS")) # save object since it takes a long time to make
-# fitted_tuned_svm_radial_mut_info <- readRDS(here("output/fitted_tuned_svm_radial_mut_info_20.RDS"))
+# saveRDS(fitted_tuned_svm_radial_mut_info, here("output/fitted_tuned_svm_radial_mut_info_20_2.RDS")) # save object since it takes a long time to make
+# fitted_tuned_svm_radial_mut_info <- readRDS(here("output/fitted_tuned_svm_radial_mut_info_20_2.RDS"))
 
 # Calculate AMS
 approx_median_sig(predictions = fitted_tuned_svm_radial_mut_info,
                   labels = higgs_testing_20$Label,
                   weights = testing_weights_20)
-# 2.76
+# 2.81
 
 # Combine best parameters ------------------------------------------------------
 # SVM using all variables:
@@ -135,7 +135,7 @@ svm_radial_tune_drop_codep_unif <- readRDS(here("output/svm_radial_tune_drop_cod
 svm_radial_tune_drop_codep_unif$best.parameters
 
 # SVM using top 10 mutual information
-svm_radial_tune_mut_info <- readRDS(here("output/svm_radial_tune_mut_info_20.RDS"))
+svm_radial_tune_mut_info <- readRDS(here("output/svm_radial_tune_mut_info_20_2.RDS"))
 svm_radial_tune_mut_info$best.parameters
 
 tune_params <- rbind(svm_radial_tune_all$best.parameters,
