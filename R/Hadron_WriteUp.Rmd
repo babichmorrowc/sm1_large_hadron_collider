@@ -1,5 +1,5 @@
 ---
-title: "Maximising AMS by classifying Higgs Boson Data - a love story"
+title: "Maximising AMS by classifying Higgs Boson Data"
 author: "Kieran Morris, Cecina Babich Morrow and Daniella Montgomery"
 date: "2023-11-07"
 output:
