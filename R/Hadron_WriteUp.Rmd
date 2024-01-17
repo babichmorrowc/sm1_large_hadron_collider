@@ -155,6 +155,8 @@ Thankfully these results justify many of our direct observations from plotting t
 
 -   The mostly uniform variables ranked lowest in terms of mutual information.
 
+## Principle Component Analysis
+
 
 ## Conclusions on Variable Selection
 After considering our multiple ways of prioritising these variables, we conclude that we will remove our variables heirarchically in the following order:
