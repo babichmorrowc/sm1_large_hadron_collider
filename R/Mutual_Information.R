@@ -20,6 +20,12 @@ Mutual_Information<- function(parameter){
 }
 #|----------------------------------------------------|
 
+Plot_Mutual_Information <- function(MI_Data){
+    par(mar= c(10,12,10,5))
+    bar_chart <- barplot(height = MI_Data$data, names.arg = MI_Data$names, col = "skyblue", las = 2, main = "Mutual Information Values", horiz = TRUE, xlab = "Mutual Information")
+    return(bar_chart)
+}
+
 #|Variables to use-----------------------------------|
 header = names(higgs_data_orig[2:30])
 #|----------------------------------------------------|
@@ -34,3 +40,5 @@ header = names(higgs_data_orig[2:30])
 #Local Copy of dataframe-------------------------------------------|
 MI_Data_STORED <- data.frame(names = header,data=c(0.157847348,0.099242021,0.090955700,0.034024850,0.033387741,0.032628663,0.032134847,0.018698667,0.010926408,0.039696267,0.043557790,0.048218121,0.025173021,0.064883381,0.009364819,0.004573067,0.013445495,0.013914809,0.003812932,0.027523670,0.003771850,0.031078017,0.019823370,0.026665620,0.025529809,0.015581755,0.013785587,0.020635994,0.013326433))
 MI_Data_STORED_Ordered <- MI_Data_STORED[order(MI_Data_STORED$data,decreasing = TRUE),]
+
+

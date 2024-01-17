@@ -138,13 +138,15 @@ Before we decide on our preferences of variables, we employ an information theor
 
 For each variable $V$ we compute its mutual information with `Label`, variables with high mutual information are better indicators for classification. We hope this will validate our observations from plotting the data.
 
-Our results are below:
-```{r,echo = FALSE, warning=FALSE,message = FALSE}
+Our results are below, see the appendix for the exact values.
+```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 10,fig.width= 10,fig.align = "center"}
 source(here("R/Mutual_Information.R"))
 
 dt <- datatable(MI_Data_STORED_Ordered,col =c("Variable","Mutual Information"),
                 options = list(pagelength=10))
-dt
+
+
+Plot_Mutual_Information(MI_Data_STORED_Ordered)
 ```
 
 Thankfully these results justify many of our direct observations from plotting the densities:
@@ -316,4 +318,9 @@ plot_list2 <- lapply(cols_ToPlot3,plots)
 plot_sample_densities_orig <- ggarrange(plotlist = plot_list2,ncol = 2, nrow = 15, align = "v", common.legend = TRUE)
 
 plot_sample_densities_orig
+```
+
+### Mutual Information Results Table
+```{r}
+dt
 ```
