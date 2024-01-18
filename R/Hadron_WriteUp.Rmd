@@ -139,7 +139,7 @@ Before we decide on our preferences of variables, we employ an information theor
 For each variable $V$ we compute its mutual information with `Label`, variables with high mutual information are better indicators for classification. We hope this will validate our observations from plotting the data.
 
 Our results are below, see the appendix for the exact values.
-```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 10,fig.width= 10,fig.align = "center"}
+```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 10,fig.width= 10,fig.align = "center",results=FALSE}
 source(here("R/Mutual_Information.R"))
 
 dt <- datatable(MI_Data_STORED_Ordered,col =c("Variable","Mutual Information"),
