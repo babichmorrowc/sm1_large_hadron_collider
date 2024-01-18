@@ -19,20 +19,20 @@ Additionally this project comes with a package which contains all necessary func
 devtools::install_github("babichmorrowc/higgiesmalls")
 ```
 ```{r include = FALSE}
-library(higgiesmalls)
-library(tidyverse)
-library(here)
-library(skimr)
-library(ggplot2)
-library(purrr)
+library(higgiesmalls)#import our package
+library(tidyverse)#tidyverse
+library(here)#file organisation
+library(skimr)#summary data analysis
+library(ggplot2)#ggplot
+library(purrr)#tidyverse add on
 library(ggpubr) #for ggarrange
 library(DT) #datatables
-library(kableExtra)
-library(cowplot)
+library(cowplot)#another ggarrange
 ```
 
 ```{r, echo = FALSE,include=FALSE,message = FALSE}
 source(here("R/clean_data.R"))
+#Runs /clean_data, our file which tidies up the data 
 summary_OfHiggs <- skim(higgs_data_na)
 ```
 
@@ -145,7 +145,7 @@ Before we decide on our preferences of variables, we employ an information theor
 For each variable $V$ we compute its mutual information with `Label`, variables with high mutual information are better indicators for classification. We hope this will validate our observations from plotting the data.
 
 Our results are below, see the appendix for the exact values.
-```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 10,fig.width= 10,fig.align = "center",results=FALSE}
+```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 8,fig.width= 10,fig.align = "center",results=FALSE}
 source(here("R/Mutual_Information.R"))
 
 dt <- datatable(MI_Data_STORED_Ordered,col =c("Variable","Mutual Information"),
@@ -164,7 +164,18 @@ Thankfully these results justify many of our direct observations from plotting t
 -   The mostly uniform variables ranked lowest in terms of mutual information.
 
 ## Principle Component Analysis
+blah blah blah what if data is missing?
+```{r}
+source()
+```
 
+WOWZA its way more seperable
+
+We ca also find out how gud they R
+```{r}
+source("YOURPCA")
+#plot_grid(....)
+```
 
 ## Conclusions on Variable Selection
 After considering our multiple ways of prioritising these variables, we conclude that we will remove our variables heirarchically in the following order:
