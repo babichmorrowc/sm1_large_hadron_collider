@@ -1,28 +1,42 @@
 # Perform Fisher Discriminant Analysis on the data
 
 # Data cleaning ----------------------------------------------------------------
-#### Drop algebraic co-dependencies ####
+#### Drop codependencies & uniform variables ####
 # Drop the individual components that sum to PRI_jet_all_pt
 # and those that make up the DER_pt_ratio_lep_tau ratio
-higgs_vars_drop_codep <- higgs_vars %>% 
+# Remove the variables that are uniformly distributed between signal & background
+higgs_vars_drop_codep_unif <- higgs_vars %>% 
   select(-c(PRI_jet_leading_pt,
             PRI_jet_subleading_pt,
             PRI_lep_pt,
-            PRI_tau_pt))
-
-# Make matrix of predictor variables
-higgs_vars_drop_codep_matrix <- higgs_vars_drop_codep %>% 
-  select(-Label) %>% 
-  as.matrix()
-
-#### Drop uniform variables ####
-# In addition to removing the uniformly distributed variables
-# Remove the variables that are uniformly distributed between signal & background
-higgs_vars_drop_codep_unif <- higgs_vars_drop_codep %>% 
+            PRI_tau_pt)) %>% 
   dplyr::select(-all_of(unif_vars))
 
 # Make matrix of predictor variables
 higgs_vars_drop_codep_unif_matrix <- higgs_vars_drop_codep_unif %>% 
+  select(-Label) %>% 
+  as.matrix()
+
+#### Remove lowest mutual information ####
+# Drop bottom 10 mutual information
+lowest_mut_info_vars <-
+  c(
+    'PRI_jet_leading_phi',
+    'PRI_lep_eta',
+    'PRI_jet_subleading_pt',
+    'PRI_lep_pt',
+    'PRI_jet_subleading_phi',
+    'DER_pt_tot',
+    'PRI_tau_eta',
+    'PRI_tau_phi',
+    'PRI_lep_phi',
+    'PRI_met_phi'
+  )
+higgs_vars_drop_mut_info <- higgs_vars %>% 
+  select(-all_of(lowest_mut_info_vars))
+
+# Make matrix of predictor variables
+higgs_vars_drop_mut_info_matrix <- higgs_vars_drop_mut_info %>% 
   select(-Label) %>% 
   as.matrix()
 
@@ -62,18 +76,7 @@ fisher_discrim_higgs_vars_all <- cbind(
   dplyr::select(higgs_vars, Label)
 )
 
-#### Drop algebraic co-dependencies ####
-fisher_discrim_drop_codep <- fisher_discrim(higgs_vars_drop_codep, class_pos = "s", class_neg = "b")
-fisher_discrim_drop_codep_pred <- apply(higgs_vars_drop_codep_matrix, 1, function(x) sum(x*fisher_discrim_drop_codep))
-scatter_ratio_drop_codep <- scatter_ratio(higgs_vars_drop_codep, class_pos = "s", class_neg = "b", w = fisher_discrim_drop_codep)
-
-# Create scaled dataframe for ggplot
-fisher_discrim_higgs_vars_drop_codep <- cbind(
-  fisher_discrim_drop_codep_pred,
-  dplyr::select(higgs_vars, Label)
-)
-
-#### Drop uniform variables ####
+#### Drop co-dependencies and uniform variables ####
 fisher_discrim_drop_codep_unif <- fisher_discrim(higgs_vars_drop_codep_unif, class_pos = "s", class_neg = "b")
 fisher_discrim_drop_codep_unif_pred <- apply(higgs_vars_drop_codep_unif_matrix, 1, function(x) sum(x*fisher_discrim_drop_codep_unif))
 scatter_ratio_drop_codep_unif <- scatter_ratio(higgs_vars_drop_codep_unif, class_pos = "s", class_neg = "b", w = fisher_discrim_drop_codep_unif)
@@ -81,6 +84,17 @@ scatter_ratio_drop_codep_unif <- scatter_ratio(higgs_vars_drop_codep_unif, class
 # Create scaled dataframe for ggplot
 fisher_discrim_higgs_vars_drop_codep_unif <- cbind(
   fisher_discrim_drop_codep_unif_pred,
+  dplyr::select(higgs_vars, Label)
+)
+
+#### Drop lowest mutual information ####
+fisher_discrim_drop_mut_info <- fisher_discrim(higgs_vars_drop_mut_info, class_pos = "s", class_neg = "b")
+fisher_discrim_drop_mut_info_pred <- apply(higgs_vars_drop_mut_info_matrix, 1, function(x) sum(x*fisher_discrim_drop_mut_info))
+scatter_ratio_drop_mut_info <- scatter_ratio(higgs_vars_drop_mut_info, class_pos = "s", class_neg = "b", w = fisher_discrim_drop_mut_info)
+
+# Create scaled dataframe for ggplot
+fisher_discrim_higgs_vars_drop_mut_info <- cbind(
+  fisher_discrim_drop_mut_info_pred,
   dplyr::select(higgs_vars, Label)
 )
 

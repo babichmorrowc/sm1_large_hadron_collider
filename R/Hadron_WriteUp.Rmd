@@ -185,17 +185,17 @@ FDA_all <- ggplot() +
   labs(x = expression(w^T * x)) +
   ggtitle("FDA with all variables") +
   theme_bw()
-FDA_codep <- ggplot() +
-  geom_histogram(aes(x = fisher_discrim_drop_codep_pred, y = stat(density), fill = Label),
-                 data = fisher_discrim_higgs_vars_drop_codep) +
-  labs(x = expression(w^T * x)) +
-  ggtitle("FDA without codependencies") +
-  theme_bw()
 FDA_codep_unif <- ggplot() +
   geom_histogram(aes(x = fisher_discrim_drop_codep_unif_pred, y = stat(density), fill = Label),
                  data = fisher_discrim_higgs_vars_drop_codep_unif) +
   labs(x = expression(w^T * x)) +
   ggtitle("FDA without codependencies and uniform variables") +
+  theme_bw()
+FDA_drop_mut_info <- ggplot() +
+  geom_histogram(aes(x = fisher_discrim_drop_mut_info_pred, y = stat(density), fill = Label),
+                 data = fisher_discrim_higgs_vars_drop_mut_info) +
+  labs(x = expression(w^T * x)) +
+  ggtitle("FDA without lowest mutual information") +
   theme_bw()
 FDA_mut_info <- ggplot() +
   geom_histogram(aes(x = fisher_discrim_mut_info_pred, y = stat(density), fill = Label),
@@ -203,7 +203,7 @@ FDA_mut_info <- ggplot() +
   labs(x = expression(w^T * x)) +
   ggtitle("FDA with highest mutual information") +
   theme_bw()
-plot_grid(FDA_all,FDA_codep,FDA_codep_unif,FDA_mut_info,nrow = 2)
+plot_grid(FDA_all,FDA_codep_unif,FDA_drop_mut_info,FDA_mut_info,nrow = 2)
 ```
 
 For these different FDA embeddings, we can compare the ratio between between class scatterness and within class scatterness:
@@ -212,19 +212,19 @@ For these different FDA embeddings, we can compare the ratio between between cla
 datatable(
   data = data.frame(
     variables = c("All variables",
-                  "Without codependencies",
                   "Without codependencies and uniform variables",
+                  "Without lowest mutual information",
                   "Highest mutual information"),
     scatter_ratio = c(scatter_ratio_all,
-                      scatter_ratio_drop_codep,
                       scatter_ratio_drop_codep_unif,
+                      scatter_ratio_drop_mut_info,
                       scatter_ratio_mut_info)
   ),
   colnames = c("Variables included", "Scatter ratio")
 )
 ```
 
-We find that removing variables slightly lowers the linear separability of the data, but in general the values are comparable. Based on the plots, we can conclude that it is not possible to achieve a high degree of linear separability between the signal and background events, indicating that a feature transform is most likely appropriate.
+We find that removing variables slightly lowers the linear separability of the data, but in general the values are comparable, particularly when comparing the scatter ratio of all variables with that removing the 10 lowest mutual information. Based on the plots, we can conclude that it is not possible to achieve a high degree of linear separability between the signal and background events with any of the variable sets, indicating that a non-linear feature transform is most likely appropriate.
 
 
 # Support Vector Machines
