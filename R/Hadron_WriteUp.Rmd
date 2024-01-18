@@ -263,7 +263,7 @@ datatable(
 
 Based on these results, along with the results of FDA indicating that the dataset is not linearly separable, we moved forward using a radial kernel. We performed 5-fold cross-validation over the 20% training set to tune the two hyperparameters using a grid search: cost and $\gamma$ (bandwidth). We allowed cost to take on the values 0.5, 1, and 2 and $\gamma$ to take on the values 0.01, 0.1, and 0.5. Tuning was performed using our function `ams_tune_parallel`, which modifies the `e1071::tune` function to maximise AMS and to conduct cross-validation in parallel, dramatically improving the performance of tuning compared to the original package.
 
-Below are the results of the hyperparameter tuning using the three sets of variables: 1) Including all variables; 2) Removing the algebraic co-dependencies and uniformly distributed variables; 3) Using only the 10 variables with the highest mutual information.
+Below are the results of the hyperparameter tuning using four sets of variables: 1) Including all variables; 2) Removing the algebraic co-dependencies and uniformly distributed variables; 3) Removing the 10 variables with the lowest mutual information; 4) Using only the 10 variables with the highest mutual information.
 
 ```{r,echo = FALSE}
 tune_params <- readRDS(here("output/tune_params.RDS"))
@@ -280,6 +280,7 @@ We then used the model using the best hyperparameter values from tuning to find 
 ```{r echo = FALSE}
 fitted_tuned_svm_radial_all <- readRDS(here("output/fitted_tuned_svm_radial_all_20.RDS"))
 fitted_tuned_svm_radial_drop_codep_unif <- readRDS(here("output/fitted_tuned_svm_radial_drop_codep_unif_20_gc.RDS"))
+fitted_tuned_svm_radial_drop_mut_info <- readRDS(here("output/fitted_tuned_svm_radial_drop_mut_info_20.RDS"))
 fitted_tuned_svm_radial_mut_info <- readRDS(here("output/fitted_tuned_svm_radial_mut_info_20_2.RDS"))
 
 all_ams <- approx_median_sig(predictions = fitted_tuned_svm_radial_all,
@@ -288,6 +289,9 @@ all_ams <- approx_median_sig(predictions = fitted_tuned_svm_radial_all,
 drop_codep_unif_ams <- approx_median_sig(predictions = fitted_tuned_svm_radial_drop_codep_unif,
                                          labels = higgs_testing_20$Label,
                                          weights = testing_weights_20)
+drop_mut_info_ams <- approx_median_sig(predictions = fitted_tuned_svm_radial_drop_mut_info,
+                                       labels = higgs_testing_20$Label,
+                                       weights = testing_weights_20)
 mut_info_ams <- approx_median_sig(predictions = fitted_tuned_svm_radial_mut_info,
                                   labels = higgs_testing_20$Label,
                                   weights = testing_weights_20)
@@ -298,16 +302,18 @@ datatable(
   data = data.frame(
     kernel = c("All variables",
                "Without co-dependencies and uniform variables",
+               "Without lowest mutual information",
                "Highest mutual information"),
     AMS = c(all_ams,
             drop_codep_unif_ams,
+            drop_mut_info_ams,
             mut_info_ams)
   ),
   colnames = c("Variables included", "Testing AMS")
 )
 ```
 
-We see in the above data that removing algebraic codependencies and the uniform variables produced the highest AMS when employing an RBF kernel. With using the top ten highest mutual information actually underperforming against using all variables. This is dissapointing, however not particularly surprising as this cut 2/3 of the variables out of the problem.
+We see in the above data that removing the ten lowest mutual information produced the highest AMS when using an RBF kernel, followed by removing algebraic codependencies and the uniform variables. Using only the top ten highest mutual information actually yielded the lowest AMS, highlighting the trade-off between prioritizing high mutual information versus removing too many variables. 
 
 # Appendix
 

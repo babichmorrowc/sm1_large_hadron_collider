@@ -72,7 +72,22 @@ mut_info_vars <-
 higgs_training_20_mut_info <- higgs_training_20 %>% 
   dplyr::select(mut_info_vars,
                 Label)
-
+# Drop bottom 10 mutual information
+lowest_mut_info_vars <-
+  c(
+    'PRI_jet_leading_phi',
+    'PRI_lep_eta',
+    'PRI_jet_subleading_pt',
+    'PRI_lep_pt',
+    'PRI_jet_subleading_phi',
+    'DER_pt_tot',
+    'PRI_tau_eta',
+    'PRI_tau_phi',
+    'PRI_lep_phi',
+    'PRI_met_phi'
+  )
+higgs_training_20_drop_mut_info <- higgs_training_20 %>% 
+  dplyr::select(-all_of(lowest_mut_info_vars))
 
 # Calculate adjusted weights for training data
 training_weights_20 <- adjust_weights(complete_data = higgs_data_orig,
@@ -95,6 +110,9 @@ higgs_testing_20_drop_codep_unif <- higgs_testing_20 %>%
 higgs_testing_20_mut_info <- higgs_testing_20 %>% 
   dplyr::select(mut_info_vars,
                 Label)
+# Drop bottom 10 mutual information
+higgs_testing_20_drop_mut_info <- higgs_testing_20 %>% 
+  dplyr::select(-all_of(lowest_mut_info_vars))
 
 # Calculate adjusted weights for testing data
 testing_weights_20 <- adjust_weights(complete_data = higgs_data_orig,
