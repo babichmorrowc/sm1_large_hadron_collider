@@ -34,6 +34,7 @@ library(cowplot)#another ggarrange
 source(here("R/clean_data.R"))
 #Runs /clean_data, our file which tidies up the data 
 summary_OfHiggs <- skim(higgs_data_na)
+#using skim package to get a brief summary of the data including completion rate
 ```
 
 # Preliminary Observations
@@ -64,8 +65,11 @@ Below are the variables which contain undefined values. By convention it was pro
 
 ```{r,echo = FALSE}
 variables_WithError <- filter(yank(summary_OfHiggs,"numeric"), complete_rate != 1)[1:3]
+#use filter to find all columns which contain missing data
 ve <- datatable(variables_WithError[1:3],options = list(pageLength = 11))
+#generate a datatable with the error variables
 ve
+#print ve
 ```
 
 Notice that every column besides `DER_mass_MMC` is a jet variable, and in those, we only have two values for `completion_rate`. In fact these correspond to different values of `PRI_jet_num`:
@@ -85,16 +89,14 @@ Despite understanding the cause of (most of) our missing data, we still don't kn
 Below we compute the percentage of `NA` data in Background and Signal respectively. If this missing data is distributed uniformly across Background and Signal then the percentages should be very close.
 
 ```{r, echo = FALSE}
-variables_WithError <- filter(summary_OfHiggs, complete_rate != 1)#Finding the columns which contain undefined elements
-
 Background <- filter(higgs_data_na, Label == "b")[c(variables_WithError$skim_variable)]#filtering rows by background
 Signal <- filter(higgs_data_na, Label =="s")[c(variables_WithError$skim_variable)]#filter rows by signal
 
 missing_GivenB <- apply(Background,2,function(x){return(round(100*sum(is.na(x))/length(x),digits = 4))})#calculate percentage missing data for background and signal
 missing_GivenS <- apply(Signal,2,function(x){return(round(100*sum(is.na(x))/length(x),digits = 4))})
-
+#Compute the percentage of background and signal missing from each variable
 df <- datatable(data.frame(missing_GivenS,missing_GivenB,missing_GivenB-missing_GivenS),col = c("Signal","Background","Difference"),caption = "% of Missing Background and Signal Data",options = list(pageLength = 11))
-
+#generate a dataframe 
 df
 ```
 
@@ -120,9 +122,11 @@ To get an understanding of the behavior of variable given their classification, 
 
 ```{r, warning=FALSE,message = FALSE, echo = FALSE,fig.align="center",fig.width = 14,fig.height= 10}
 source(here("R/variable_plots.R"))
-
+#use variable plots to get plots, a function that returns densities plots for each variable given that it is b or s respectively, see R/variable_plots for more info
 density_plots <- lapply(cols_ToPlot,plots)
+#apply plots to our sample variables
 plot_sample_densities <- ggarrange(plotlist = density_plots,ncol = 2, nrow = 2, align = "v", common.legend = TRUE)
+#generate grid of plots
 plot_sample_densities
 ```
 
@@ -147,10 +151,10 @@ For each variable $V$ we compute its mutual information with `Label`, variables 
 Our results are below, see the appendix for the exact values.
 ```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 8,fig.width= 10,fig.align = "center",results=FALSE}
 source(here("R/Mutual_Information.R"))
-
+#source mutual information file, which produces the mutual information for each variable, see file for more info
 dt <- datatable(MI_Data_STORED_Ordered,col =c("Variable","Mutual Information"),
                 options = list(pagelength=10))
-
+#generate datatable with information in
 
 Plot_Mutual_Information(MI_Data_STORED_Ordered)
 ```
@@ -171,7 +175,7 @@ source()
 
 WOWZA its way more seperable
 
-We ca also find out how gud they R
+We ca also find out how gud they r
 ```{r}
 source("YOURPCA")
 #plot_grid(....)
@@ -196,30 +200,37 @@ FDA creates an embedding that tells us how linearly separated our data can possi
 
 ```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.width = 14,fig.height= 5}
 source(here("R/fda.R"))
+#source fda file, which computes fda for soem family of variables, and gives their scatter ratio, see file for more info
 FDA_all <- ggplot() +
   geom_histogram(aes(x = fisher_discrim_all_pred, y = stat(density), fill = Label),
                  data = fisher_discrim_higgs_vars_all) +
   labs(x = expression(w^T * x)) +
   ggtitle("FDA with all variables") +
   theme_bw()
+
+#produce fda plot for all variables
 FDA_codep_unif <- ggplot() +
   geom_histogram(aes(x = fisher_discrim_drop_codep_unif_pred, y = stat(density), fill = Label),
                  data = fisher_discrim_higgs_vars_drop_codep_unif) +
   labs(x = expression(w^T * x)) +
   ggtitle("FDA without codependencies and uniform variables") +
   theme_bw()
+
+#produce fda plot for dropping codependent and uniform variables
 FDA_drop_mut_info <- ggplot() +
   geom_histogram(aes(x = fisher_discrim_drop_mut_info_pred, y = stat(density), fill = Label),
                  data = fisher_discrim_higgs_vars_drop_mut_info) +
   labs(x = expression(w^T * x)) +
   ggtitle("FDA without lowest mutual information") +
   theme_bw()
+  #produce fda plot for dropping the 10 lowest mutual information
 FDA_mut_info <- ggplot() +
   geom_histogram(aes(x = fisher_discrim_mut_info_pred, y = stat(density), fill = Label),
                  data = fisher_discrim_higgs_vars_mut_info) +
   labs(x = expression(w^T * x)) +
   ggtitle("FDA with highest mutual information") +
   theme_bw()
+#produce fda plot for top ten mutual information
 plot_grid(FDA_all,FDA_codep_unif,FDA_drop_mut_info,FDA_mut_info,nrow = 2)
 ```
 
@@ -239,6 +250,7 @@ datatable(
   ),
   colnames = c("Variables included", "Scatter ratio")
 )
+#produce a datatable with each scatter ratio
 ```
 
 We find that removing variables slightly lowers the linear separability of the data, but in general the values are comparable, particularly when comparing the scatter ratio of all variables with that removing the 10 lowest mutual information. Based on the plots, we can conclude that it is not possible to achieve a high degree of linear separability between the signal and background events with any of the variable sets, indicating that a non-linear feature transform is most likely appropriate.
@@ -250,6 +262,7 @@ We divided our dataset into a training and testing split, training SVMs on the t
 
 ```{r echo = FALSE, message=FALSE,warning = FALSE}
 source(here("R/training_testing.R"))
+#source training_testing file which generates training and testing data sets for SVM
 ```
 
 By training SVMs with a linear kernel vs. a radial kernel on a 20% training set (using all predictor variables), we found that a radial kernel consistently yielded higher AMS:
@@ -257,13 +270,15 @@ By training SVMs with a linear kernel vs. a radial kernel on a 20% training set 
 ```{r echo = FALSE}
 fitted_svm_linear_all_20 <- readRDS(here("output/fitted_svm_linear_all_20.RDS"))
 fitted_svm_radial_all_20 <- readRDS(here("output/fitted_svm_radial_all_20.RDS"))
-
+#we ran our SVM code before knitting to save time, we simply take the results from our files
+#for details see the SVM file
 linear_ams_20 <- approx_median_sig(predictions = fitted_svm_linear_all_20,
                                    labels = higgs_testing_20$Label,
                                    weights = testing_weights_20)
 radial_ams_20 <- approx_median_sig(predictions = fitted_svm_radial_all_20,
                                    labels = higgs_testing_20$Label,
                                    weights = testing_weights_20)
+#compute the AMS from our SVM fit                                   
 ```
 
 ```{r echo = FALSE}
@@ -276,6 +291,7 @@ datatable(
   ),
   colnames = c("Kernel", "AMS")
 )
+#dataframe for AMS
 ```
 
 Based on these results, along with the results of FDA indicating that the dataset is not linearly separable, we moved forward using a radial kernel. We performed 5-fold cross-validation over the 20% training set to tune the two hyperparameters using a grid search: cost and $\gamma$ (bandwidth). We allowed cost to take on the values 0.5, 1, and 2 and $\gamma$ to take on the values 0.01, 0.1, and 0.5. Tuning was performed using our function `ams_tune_parallel`, which modifies the `e1071::tune` function to maximise AMS and to conduct cross-validation in parallel, dramatically improving the performance of tuning compared to the original package.
@@ -284,12 +300,15 @@ Below are the results of the hyperparameter tuning using four sets of variables:
 
 ```{r,echo = FALSE}
 tune_params <- readRDS(here("output/tune_params.RDS"))
+#take results from tuning params file
+#see svm file for more info
 datatable(
   tune_params,
   colnames = c("Variables included",
                "Cost",
                "Gamma")
 )
+#generate datatable
 ```
 
 We then used the model using the best hyperparameter values from tuning to find the AMS value on the 80% testing dataset.
@@ -299,7 +318,7 @@ fitted_tuned_svm_radial_all <- readRDS(here("output/fitted_tuned_svm_radial_all_
 fitted_tuned_svm_radial_drop_codep_unif <- readRDS(here("output/fitted_tuned_svm_radial_drop_codep_unif_20_gc.RDS"))
 fitted_tuned_svm_radial_drop_mut_info <- readRDS(here("output/fitted_tuned_svm_radial_drop_mut_info_20.RDS"))
 fitted_tuned_svm_radial_mut_info <- readRDS(here("output/fitted_tuned_svm_radial_mut_info_20_2.RDS"))
-
+#read results from files
 all_ams <- approx_median_sig(predictions = fitted_tuned_svm_radial_all,
                              labels = higgs_testing_20$Label,
                              weights = testing_weights_20)
@@ -312,6 +331,7 @@ drop_mut_info_ams <- approx_median_sig(predictions = fitted_tuned_svm_radial_dro
 mut_info_ams <- approx_median_sig(predictions = fitted_tuned_svm_radial_mut_info,
                                   labels = higgs_testing_20$Label,
                                   weights = testing_weights_20)
+#compute ams for all results
 ```
 
 ```{r echo = FALSE}
@@ -328,11 +348,17 @@ datatable(
   ),
   colnames = c("Variables included", "Testing AMS")
 )
+#datatable fo results
 ```
 
 We see in the above data that removing the ten lowest mutual information produced the highest AMS when using an RBF kernel, followed by removing algebraic codependencies and the uniform variables. Using only the top ten highest mutual information actually yielded the lowest AMS, highlighting the trade-off between prioritizing high mutual information versus removing too many variables. 
 
 # Appendix
+
+### Mutual Information Results Table
+```{r}
+dt
+```
 
 ### Density plots of each variable
 The following are the density plots for our variables, conditioned on whether they are a detection of a higgs boson or not. Note that in the jet-variables and `DER_mass_MMC` we have peaks at `-999` which skew many of the variable plots.
@@ -341,9 +367,4 @@ plot_list2 <- lapply(cols_ToPlot3,plots)
 plot_sample_densities_orig <- ggarrange(plotlist = plot_list2,ncol = 2, nrow = 15, align = "v", common.legend = TRUE)
 
 plot_sample_densities_orig
-```
-
-### Mutual Information Results Table
-```{r}
-dt
 ```
