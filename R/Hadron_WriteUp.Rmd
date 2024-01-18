@@ -9,7 +9,12 @@ output:
 
 This RMarkdown document is a companion piece to a Latex document submitted detailing our work on this project. For discussion including references to other works and justification for the techniques and methods used, please refer to that document. This will be an indepth exploration of the statistical results and `R` code only.
 
-Additionally this project comes with a package which contains all external annotated `R` code which can be downloaded via the following command in the `R` console:
+The source code for this Rmarkdown and all annotated `R` code can be found in the following GitHub repository:
+```{f}
+https://github.com/babichmorrowc/sm1_large_hadron_collider
+```
+
+Additionally this project comes with a package which contains all necessary functions which can be downloaded via the following command in the `R` console:
 ```{r,eval = FALSE}
 devtools::install_github("babichmorrowc/higgiesmalls")
 ```
