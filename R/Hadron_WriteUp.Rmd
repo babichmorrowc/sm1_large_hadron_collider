@@ -168,17 +168,24 @@ Thankfully these results justify many of our direct observations from plotting t
 -   The mostly uniform variables ranked lowest in terms of mutual information.
 
 ## Principle Component Analysis
-blah blah blah what if data is missing?
-```{r}
-source()
+Here we use principle component analysis as a tool for visualization to build an intuition of the predictive power of our dataset when we include the missing data with the values left as -999 and don't include the variables with any data missing, respectively
+.
+```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 3.5,fig.width= 10,fig.align = "center",results=FALSE}
+source(here("R/pca_no_missing.R"))
+plot_grid(PC1_PC2_2D,PC2_PC3_2D,PC1_PC3_2D,nrow=1)
+```
+```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 3,5,fig.width= 10,fig.align = "center",results=FALSE}
+source(here("R/pca_missing_included.R"))
+plot_grid(PC1_PC2_2D,PC2_PC3_2D,PC1_PC3_2D,nrow=1)
 ```
 
-WOWZA its way more seperable
+From these we can see that using the missing data gives us a slightly improved separability.
 
-We ca also find out how gud they r
-```{r}
-source("YOURPCA")
-#plot_grid(....)
+If we look exclusively at the contribution of each variable to each principle component when we include the missing data, then we can see that within the first four principle components we have a greater variance in these more uniform variables. Since this is based on correlation of variables across the full dataset it is difficult to determine much further about the separability of the dataset. However, we can see that the first three PCs do not have much contribution from the variables with the lowest mutual information showing that they are unlikely to be useful to include.
+
+```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 18,fig.width= 10,fig.align = "center",results=FALSE}
+source(here("R/pca_missing_included.R"))
+plot_grid(PC1_var_contri,PC2_var_contri,PC3_var_contri,PC4_var_contri,nrow=4)
 ```
 
 ## Conclusions on Variable Selection
