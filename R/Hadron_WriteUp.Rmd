@@ -179,14 +179,18 @@ source(here("R/pca_missing_included.R"))
 plot_grid(PC1_PC2_2D,PC2_PC3_2D,PC1_PC3_2D,nrow=1)
 ```
 
-From these we can see that using the missing data gives us a slightly improved separability.
-
-If we look exclusively at the contribution of each variable to each principle component when we include the missing data, then we can see that within the first four principle components we have a greater variance in these more uniform variables. Since this is based on correlation of variables across the full dataset it is difficult to determine much further about the separability of the dataset. However, we can see that the first three PCs do not have much contribution from the variables with the lowest mutual information showing that they are unlikely to be useful to include.
+From these plots we can see that using the missing data gives us improved separability.
+```{r scree, echo = FALSE, warning=FALSE, fig.align="center", fig.height=5, message=FALSE, warning=FALSE, results=FALSE}
+source(here("R/pca_missing_included.R"))
+plot_grid(scree_plot)
+```
 
 ```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 18,fig.width= 10,fig.align = "center",results=FALSE}
 source(here("R/pca_missing_included.R"))
 plot_grid(PC1_var_contri,PC2_var_contri,PC3_var_contri,PC4_var_contri,nrow=4)
 ```
+First, we can analyse the scree plot for the performed pca. This tells us that over 40% of the variance in the data was explained by PC1, but PC2, 3, & 4 all explain over 5% of the variance in the data each. We can see from the graphs of contribution from each variable to each principle component some more detail on what these PCs mean. 
+PC1 through 3 are largely explaining the effect of the different types of missing data, this is expected since this data follows a particular pattern as discussed in previous sections. PC4 is dominated by the `DER_deltar_tau_lep` and `DER_mass_vis` and suggests a notably strong correlation between them as well as anti-correlation with `PRI_met`. Comparing this to the density plot of each variable we can see this might be picking out the subtler differences in the data such as the difference between background and signal.
 
 ## Conclusions on Variable Selection
 After considering our multiple ways of prioritising these variables, we conclude that we will remove our variables heirarchically in the following order:

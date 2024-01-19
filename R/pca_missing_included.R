@@ -19,9 +19,7 @@ index <- createDataPartition(higgs_vars$Label, p = 0.001, list = FALSE)
 res.pca <- prcomp(dplyr::select(higgs_vars,where(is.numeric)), scale = TRUE)
 
 # shows scree plot, showing percentages of var explained by each pc, number of pcs should be at elbow (~3 or 4)
-scree_plot <- fviz_eig(res.pca, 
-                       barfill = "#6d9444")
-scree_plot
+scree_plot <- fviz_eig(res.pca,  geom = c("bar"), barfill = "#88ab63")
 
 # plotting pc1 against pc2
 dtp12 <- data.frame('Label' = higgs_vars$Label[index], res.pca$x[index,1:2]) # the first two components are selected 
@@ -72,7 +70,7 @@ res.pca.df <-data.frame(res.pca$rotation) # gives contribution of each variable 
 
 # plotting bar chart of the contribution of each variable on PC1 to PC4
 PC1_var_contri <- ggplot(data=res.pca.df, aes(x=attributes(res.pca.df)$row.names, y=res.pca.df[,1])) +
-  geom_bar(stat="identity", fill="#00AFBB") +
+  geom_bar(stat="identity", fill="#88ab63") +
   geom_text(aes(label=round(PC1,2)),vjust=1.5, size=3.5) +
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) +
   ggtitle("Principle Component 1 Eigenvector") +
@@ -81,7 +79,7 @@ PC1_var_contri <- ggplot(data=res.pca.df, aes(x=attributes(res.pca.df)$row.names
 
 
 PC2_var_contri <- ggplot(data=res.pca.df, aes(x=attributes(res.pca.df)$row.names, y=res.pca.df[,2])) +
-  geom_bar(stat="identity", fill="#00AFBB")+
+  geom_bar(stat="identity", fill="#88ab63")+
   geom_text(aes(label=round(PC2,2)),vjust=1.5, size=3.5) +
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) +
   ggtitle("Principle Component 2 Eigenvector") +
@@ -90,7 +88,7 @@ PC2_var_contri <- ggplot(data=res.pca.df, aes(x=attributes(res.pca.df)$row.names
 
 
 PC3_var_contri <- ggplot(data=res.pca.df, aes(x=attributes(res.pca.df)$row.names, y=res.pca.df[,3])) +
-  geom_bar(stat="identity", fill="#00AFBB")+
+  geom_bar(stat="identity", fill="#88ab63")+
   geom_text(aes(label=round(PC3,2)),vjust=1.5, size=3.5) +
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) +
   ggtitle("Principle Component 3 Eigenvector") +
@@ -99,8 +97,8 @@ PC3_var_contri <- ggplot(data=res.pca.df, aes(x=attributes(res.pca.df)$row.names
 
 
 PC4_var_contri <- ggplot(data=res.pca.df, aes(x=attributes(res.pca.df)$row.names, y=res.pca.df[,4])) +
-  geom_bar(stat="identity", fill="#00AFBB")+
-  geom_text(aes(label=round(PC3,2)),vjust=1.5, size=3.5) +
+  geom_bar(stat="identity", fill="#88ab63")+
+  geom_text(aes(label=round(PC4,2)),vjust=1.5, size=3.5) +
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) +
   ggtitle("Principle Component 4 Eigenvector") +
   xlab("Variables") +
