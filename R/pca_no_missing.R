@@ -47,7 +47,7 @@ PC1_PC3_2D <- ggplot(data = dtp13) +
   theme_minimal() +
   ggtitle("PC1 vs PC3") +
   xlab("PC1") +
-  ylab("PC3")
+  ylab("PC3") + guides(color = FALSE)
 
 
 

@@ -16,13 +16,15 @@ index <- createDataPartition(higgs_vars$Label, p = 0.001, list = FALSE)
 
 # Run PCA ----------------------------------------------------------------------
 # using the original data with no variables with missing data
-res.pca <- prcomp(dplyr::select(higgs_vars_subset,where(is.numeric)), scale = TRUE)
+res.pca <- prcomp(dplyr::select(higgs_vars,where(is.numeric)), scale = TRUE)
 
 # shows scree plot, showing percentages of var explained by each pc, number of pcs should be at elbow (~3 or 4)
-scree_plot <- fviz_eig(res.pca)
+scree_plot <- fviz_eig(res.pca, 
+                       barfill = "#6d9444")
+scree_plot
 
 # plotting pc1 against pc2
-dtp12 <- data.frame('Label' = higgs_vars_subset$Label[index], res.pca$x[index,1:2]) # the first two components are selected 
+dtp12 <- data.frame('Label' = higgs_vars$Label[index], res.pca$x[index,1:2]) # the first two components are selected 
 PC1_PC2_2D <-ggplot(data = dtp12) +
   geom_point(aes(x = PC1, y = PC2, col = Label), size=0.8) +
   theme_minimal() +
@@ -31,7 +33,7 @@ PC1_PC2_2D <-ggplot(data = dtp12) +
   ylab("PC2") + guides(color = FALSE)
 
 # plotting pc2 against pc3
-dtp23 <- data.frame('Label' = higgs_vars_subset$Label[index], res.pca$x[index,2:3]) # the first two components are selected
+dtp23 <- data.frame('Label' = higgs_vars$Label[index], res.pca$x[index,2:3]) # the first two components are selected
 PC2_PC3_2D <- ggplot(data = dtp23) +
   geom_point(aes(x = PC2, y = PC3, col = Label), size=0.8) +
   theme_minimal() +
@@ -41,19 +43,19 @@ PC2_PC3_2D <- ggplot(data = dtp23) +
 
 
 #plotting pc1 against pc3
-dtp13 <- data.frame('Label' = higgs_vars_subset$Label[index], cbind(PC1 =res.pca$x[index, 1], PC3 =res.pca$x[index, 3])) # the first two components are selected 
+dtp13 <- data.frame('Label' = higgs_vars$Label[index], cbind(PC1 =res.pca$x[index, 1], PC3 =res.pca$x[index, 3])) # the first two components are selected 
 PC1_PC3_2D <- ggplot(data = dtp13) +
   geom_point(aes(x = PC1, y = PC3, col = Label), size=0.8) +
   theme_minimal() +
   ggtitle("PC1 vs PC3") +
   xlab("PC1") +
-  ylab("PC3")
+  ylab("PC3")+ guides(color = FALSE)
 
 
 
 # plotting pc1 vs pc2 vs pc3 as suggested by elbow plot
 library(plotly)
-dtp3d <- data.frame('Label' = higgs_vars_subset$Label[index], res.pca$x[index,1:3]) # the first two components are selected 
+dtp3d <- data.frame('Label' = higgs_vars$Label[index], res.pca$x[index,1:3]) # the first two components are selected 
 custom_colors <- c("#00AFBB",  "#FC4E07")
 PC1_PC2_PC3_3D <- plot_ly(data = dtp3d[1:500,], x = ~PC1, y = ~PC2, z = ~PC3,
                           type = 'scatter3d',
