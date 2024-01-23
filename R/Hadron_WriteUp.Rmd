@@ -149,7 +149,7 @@ Before we decide on our preferences of variables, we employ an information theor
 For each variable $V$ we compute its mutual information with `Label`, variables with high mutual information are better indicators for classification. We hope this will validate our observations from plotting the data.
 
 Our results are below, see the appendix for the exact values.
-```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 8,fig.width= 10,fig.align = "center",results=FALSE}
+```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 10,fig.width= 10,fig.align = "center",results=FALSE}
 source(here("R/Mutual_Information.R"))
 #source mutual information file, which produces the mutual information for each variable, see file for more info
 dt <- datatable(MI_Data_STORED_Ordered,col =c("Variable","Mutual Information"),
@@ -168,8 +168,7 @@ Thankfully these results justify many of our direct observations from plotting t
 -   The mostly uniform variables ranked lowest in terms of mutual information.
 
 ## Principle Component Analysis
-Here we use principle component analysis as a tool for visualization to build an intuition of the predictive power of our dataset when we include the missing data with the values left as -999 and don't include the variables with any data missing, respectively
-.
+Here we use principle component analysis as a tool for visualization to build an intuition of the predictive power of our dataset when we include the missing data with the values left as -999 and don't include the variables with any data missing, respectively.
 ```{r,echo = FALSE, warning=FALSE,message = FALSE,fig.height= 3.5,fig.width= 10,fig.align = "center",results=FALSE}
 source(here("R/pca_no_missing.R"))
 plot_grid(PC1_PC2_2D,PC2_PC3_2D,PC1_PC3_2D,nrow=1)
@@ -197,9 +196,9 @@ After considering our multiple ways of prioritising these variables, we conclude
 
 1) Include all variables
 
-2) Remove all 4 algebraic co-dependencies (`PRI_jet_leading_pt`, `PRI_jet_subleading_pt`, `DER_pt_ratio_lep_tau`, `PRI_tau_pt`).
+2) Remove all 4 algebraic co-dependencies and uniform variables (`PRI_lep_phi`, `PRI_met_phi`, `PRI_tau_phi`, `PRI_jet_leading_pt`, `PRI_jet_subleading_pt`, `DER_pt_ratio_lep_tau`, `PRI_tau_pt`).
 
-3) Remove the above and any uniform variables (`PRI_lep_phi`, `PRI_met_phi`, `PRI_tau_phi`).
+3) |Remove bottom ten ranking mutual information variables.
 
 4) Only use the top ten highest ranking mutual information variables (see above).
 

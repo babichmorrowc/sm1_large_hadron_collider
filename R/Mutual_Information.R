@@ -22,7 +22,7 @@ Mutual_Information<- function(parameter){
 
 Plot_Mutual_Information <- function(MI_Data){
     par(mar= c(10,12,10,5))
-    bar_chart <- barplot(height = MI_Data$data, names.arg = MI_Data$names, col = "skyblue", las = 2, main = "Mutual Information Values", horiz = TRUE, xlab = "Mutual Information")
+    bar_chart <- barplot(height = MI_Data$data, names.arg = MI_Data$names, col = "#88ab63", las = 2, main = "Mutual Information Values", horiz = TRUE, xlab = "Mutual Information")
     return(bar_chart)
 }
 
